@@ -13,5 +13,10 @@
         "criterion": null,
         "max_depth": null,
         "min_samples_leaf": null
+    },
+    "random_tree": {
+        "n_estimators": null,
+        "max_depth": null,
+        "min_samples_leaf": null
     }
 }

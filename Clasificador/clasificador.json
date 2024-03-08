@@ -1,0 +1,17 @@
+{
+    "preprocessing": {
+        "missing_values": null,
+        "impute_strategy": null,
+        "scaling": null,
+        "text_process": null
+    },
+    "kNN": {
+        "k-min": "5",
+        "k-max": "10"
+    },
+    "decision_tree": {
+        "criterion": null,
+        "max_depth": null,
+        "min_samples_leaf": null
+    }
+}

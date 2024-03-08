@@ -10,13 +10,11 @@
         "k-max": "10"
     },
     "decision_tree": {
-        "criterion": null,
-        "max_depth": null,
-        "min_samples_leaf": null
+        "min_depth": "5",
+        "max_depth": "10"
     },
     "random_tree": {
-        "n_estimators": null,
-        "max_depth": null,
-        "min_samples_leaf": null
+        "min_depth": "5",
+        "max_depth": "10"
     }
 }

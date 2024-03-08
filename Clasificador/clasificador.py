@@ -256,11 +256,27 @@ def decision_tree(data):
     x_train, x_dev, y_train, y_dev = train_test_split(x, y, test_size=0.25)
     f1_score_micro = 0
     f1_score_macro = 0
-    c_optimo = ''
     m_optimo = 0
-    s_optimo = ''
+    c_optimo = ''
     i=0
-    
+    for m in range(int(args.decision_tree["min_depth"]), int(args.decision_tree["max_depth"])):
+        for c in ['gini', 'entropy']:
+            dt = DecisionTreeClassifier(max_depth=m, criterion=c)
+            dt.fit(x_train, y_train)
+            y_pred = dt.predict(x_dev)
+            i+=1
+            if f1_score(y_dev, y_pred, average='micro') > f1_score_micro:
+                if f1_score(y_dev, y_pred, average='macro') > f1_score_macro:
+                    f1_score_micro = f1_score(y_dev, y_pred, average='micro')
+                    f1_score_macro = f1_score(y_dev, y_pred, average='macro')
+                    m_optimo = m
+                    c_optimo = c
+                    # Guardamos el modelo utilizando pickle
+                    with open('modelo.pkl', 'wb') as file:
+                        pickle.dump(dt, file)
+    print("Numero de iteraciones: ", i)
+    print("m_optimo: ", str(m_optimo) + " c_optimo: ", str(c_optimo))
+    print("F1-score micro: ", str(f1_score_micro) + " F1-score macro: ", str(f1_score_macro))
     
 def random_forest(data):
     """

@@ -62,8 +62,6 @@ def parse_args():
     for key, value in config.items():
         setattr(args, key, value)
     
-    print(args)
-    
     # Parseamos los argumentos
     return args
     

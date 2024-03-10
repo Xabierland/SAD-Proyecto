@@ -29,6 +29,7 @@ from nltk.stem import PorterStemmer
 from nltk.tokenize import word_tokenize
 # Imblearn
 from imblearn.under_sampling import RandomUnderSampler
+from imblearn.over_sampling import RandomOverSampler
 
 def signal_handler(sig, frame):
     """
@@ -186,7 +187,20 @@ def preprocesar_datos(data, args):
             print("No se estan tratando los textos")
     
     # 7 Realizamos Oversampling o Undersampling
-    
+    if args.preprocessing["sampling"] == "oversampling":
+        ros = RandomOverSampler()
+        x = data.drop(columns=[args.prediction])
+        y = data[args.prediction]
+        x, y = ros.fit_resample(x, y)
+        data = pd.concat([x, y], axis=1)
+    elif args.preprocessing["sampling"] == "undersampling":
+        rus = RandomUnderSampler()
+        x = data.drop(columns=[args.prediction])
+        y = data[args.prediction]
+        x, y = rus.fit_resample(x, y)
+        data = pd.concat([x, y], axis=1)
+    else:
+        print("No se estan realizando oversampling o undersampling")
     
     # ! Just for testing
     data.to_csv('datos/data.csv', index=False)

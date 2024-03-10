@@ -16,7 +16,7 @@ import json
 # Sklearn
 from sklearn.calibration import LabelEncoder
 from sklearn.metrics import f1_score, confusion_matrix, classification_report
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.preprocessing import MaxAbsScaler, MinMaxScaler, Normalizer
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 from sklearn.neighbors import KNeighborsClassifier
@@ -25,7 +25,7 @@ from sklearn.ensemble import RandomForestClassifier
 # Nltk
 import nltk
 from nltk.corpus import stopwords
-from nltk.stem import PorterStemmer, WordNetLemmatizer
+from nltk.stem import PorterStemmer
 from nltk.tokenize import word_tokenize
 # Imblearn
 from imblearn.under_sampling import RandomUnderSampler
@@ -43,10 +43,12 @@ def parse_args():
     """
     Función para parsear los argumentos de entrada
     """
-    parse = argparse.ArgumentParser(description="Clasificador")
+    parse = argparse.ArgumentParser(description="Practica de algoritmos de clasificación de datos.")
+    parse.add_argument("-m", "--mode", help="Modo de ejecución (train* o test)", required=False, default="train")
     parse.add_argument("-f", "--file", help="Fichero csv", required=True)
     parse.add_argument("-a", "--algorithm", help="Algoritmo a ejecutar (kNN, decision_tree o random_forest)", required=True)
-    parse.add_argument("-P", "--prediction", help="Columna a predecir", required=True)
+    parse.add_argument("-p", "--prediction", help="Columna a predecir", required=True)
+    parse.add_argument("-v", "--verbose", help="Mostrar información adicional", required=False, default=False)
     
     # Parseamos los argumentos
     args = parse.parse_args()
@@ -64,7 +66,6 @@ def parse_args():
     # Parseamos los argumentos
     return args
     
-
 def load_data(file):
     """
     Función para cargar los datos de un fichero csv
@@ -196,10 +197,8 @@ def kNN(data):
     Función para implementar el algoritmo kNN.
     Hace un barrido de hiperparametros para encontrar los parametros optimos
 
-    :param train: Conjunto de datos de entrenamiento.
-    :type train: pandas.DataFrame
-    :param dev: Conjunto de datos de desarrollo.
-    :type dev: pandas.DataFrame
+    :param data: Conjunto de datos para realizar la clasificación.
+    :type data: pandas.DataFrame
     :return: Tupla con la clasificación de los datos.
     :rtype: tuple
     """
@@ -211,34 +210,22 @@ def kNN(data):
     x_train, x_dev, y_train, y_dev = train_test_split(x, y, test_size=0.25)
     
     # Hacemos un barrido de hiperparametros
-    f1_score_micro = 0
-    f1_score_macro = 0
-    k_optimo = 0
-    w_optimo = ''
-    p_optimo = 0
-    i=0
-    for k in range(int(args.kNN["k-min"]), int(args.kNN["k-max"])):
-        for w in ['uniform', 'distance']:
-            for p in range(1, 3):
-                knn = KNeighborsClassifier(n_neighbors=k, weights=w, p=p)
-                knn.fit(x_train, y_train)
-                y_pred = knn.predict(x_dev)
-                i+=1
-                if f1_score(y_dev, y_pred, average='micro') > f1_score_micro:
-                    if f1_score(y_dev, y_pred, average='macro') > f1_score_macro:
-                        f1_score_micro = f1_score(y_dev, y_pred, average='micro')
-                        f1_score_macro = f1_score(y_dev, y_pred, average='macro')
-                        k_optimo = k
-                        w_optimo = w
-                        p_optimo = p
-                        # Guardamos el modelo utilizando pickle
-                        with open('modelo.pkl', 'wb') as file:
-                            pickle.dump(knn, file)
-    print("Numero de iteraciones: ", i)
-    print("k_optimo: ", str(k_optimo) + " w_optimo: ", str(w_optimo) + " p_optimo: ", str(p_optimo))
-    print("F1-score micro: ", str(f1_score_micro) + " F1-score macro: ", str(f1_score_macro))
-                
+    gs = GridSearchCV(KNeighborsClassifier(), args.kNN, cv=5, n_jobs=-1,)
+    gs.fit(x_train, y_train)
     
+    # Guardamos el modelo utilizando pickle
+    with open('knn.pkl', 'wb') as file:
+        pickle.dump(gs, file)
+    
+    # Mostramos los resultados
+    if args.verbose:
+        print("Mejores parametros:\n", gs.best_params_)
+        print("Mejor puntuacion:\n", gs.best_score_)
+        print("F1-score micro:\n", calculate_fscore(y_dev, gs.predict(x_dev))[0])
+        print("F1-score macro:\n", calculate_fscore(y_dev, gs.predict(x_dev))[1])
+        print("Informe de clasificación:\n", calculate_classification_report(y_dev, gs.predict(x_dev)))
+        print("Matriz de confusión:\n", calculate_confusion_matrix(y_dev, gs.predict(x_dev)))
+
 def decision_tree(data):
     """
     Función para implementar el algoritmo de árbol de decisión.
@@ -254,29 +241,23 @@ def decision_tree(data):
     
     # Dividimos los datos en entrenamiento y dev
     x_train, x_dev, y_train, y_dev = train_test_split(x, y, test_size=0.25)
-    f1_score_micro = 0
-    f1_score_macro = 0
-    m_optimo = 0
-    c_optimo = ''
-    i=0
-    for m in range(int(args.decision_tree["min_depth"]), int(args.decision_tree["max_depth"])):
-        for c in ['gini', 'entropy']:
-            dt = DecisionTreeClassifier(max_depth=m, criterion=c)
-            dt.fit(x_train, y_train)
-            y_pred = dt.predict(x_dev)
-            i+=1
-            if f1_score(y_dev, y_pred, average='micro') > f1_score_micro:
-                if f1_score(y_dev, y_pred, average='macro') > f1_score_macro:
-                    f1_score_micro = f1_score(y_dev, y_pred, average='micro')
-                    f1_score_macro = f1_score(y_dev, y_pred, average='macro')
-                    m_optimo = m
-                    c_optimo = c
-                    # Guardamos el modelo utilizando pickle
-                    with open('modelo.pkl', 'wb') as file:
-                        pickle.dump(dt, file)
-    print("Numero de iteraciones: ", i)
-    print("m_optimo: ", str(m_optimo) + " c_optimo: ", str(c_optimo))
-    print("F1-score micro: ", str(f1_score_micro) + " F1-score macro: ", str(f1_score_macro))
+    
+    # Hacemos un barrido de hiperparametros
+    gs = GridSearchCV(DecisionTreeClassifier(), args.decision_tree, cv=5, n_jobs=-1,)
+    gs.fit(x_train, y_train)
+    
+    # Guardamos el modelo utilizando pickle
+    with open('decision_tree.pkl', 'wb') as file:
+        pickle.dump(gs, file)
+        
+    # Mostramos los resultados
+    if args.verbose:
+        print("Mejores parametros:\n", gs.best_params_)
+        print("Mejor puntuacion:\n", gs.best_score_)
+        print("F1-score micro:\n", calculate_fscore(y_dev, gs.predict(x_dev))[0])
+        print("F1-score macro:\n", calculate_fscore(y_dev, gs.predict(x_dev))[1])
+        print("Informe de clasificación:\n", calculate_classification_report(y_dev, gs.predict(x_dev)))
+        print("Matriz de confusión:\n", calculate_confusion_matrix(y_dev, gs.predict(x_dev)))
     
 def random_forest(data):
     """
@@ -289,6 +270,29 @@ def random_forest(data):
     :return: Tupla con la clasificación de los datos.
     :rtype: tuple
     """
+    # Sacamos la columna a predecir
+    y = data[args.prediction]
+    x = data.drop(columns=[args.prediction])
+    
+    # Dividimos los datos en entrenamiento y dev
+    x_train, x_dev, y_train, y_dev = train_test_split(x, y, test_size=0.25)
+    
+    # Hacemos un barrido de hiperparametros
+    gs = GridSearchCV(RandomForestClassifier(), args.random_forest, cv=5, n_jobs=-1,)
+    gs.fit(x_train, y_train)
+    
+    # Guardamos el modelo utilizando pickle
+    with open('random_forest.pkl', 'wb') as file:
+        pickle.dump(gs, file)
+    
+    # Mostramos los resultados
+    if args.verbose:
+        print("Mejores parametros:\n", gs.best_params_)
+        print("Mejor puntuacion:\n", gs.best_score_)
+        print("F1-score micro:\n", calculate_fscore(y_dev, gs.predict(x_dev))[0])
+        print("F1-score macro:\n", calculate_fscore(y_dev, gs.predict(x_dev))[1])
+        print("Informe de clasificación:\n", calculate_classification_report(y_dev, gs.predict(x_dev)))
+        print("Matriz de confusión:\n", calculate_confusion_matrix(y_dev, gs.predict(x_dev)))
 
 if __name__ == "__main__":
     print("=== Clasificador ===")
@@ -296,25 +300,46 @@ if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal_handler)
     # Parseamos los argumentos
     args = parse_args()
-    # Descargamos los recursos necesarios de nltk
-    print("\nDescargando diccionarios...")
-    nltk.download('stopwords')
-    nltk.download('punkt')
-    nltk.download('wordnet')
-    # Cargamos los datos
-    print("\nCargando datos...")
-    data = load_data(args.file)
-    # Preprocesamos los datos
-    print("\nPreprocesando datos...")
-    data=preprocesar_datos(data, args)
-    # Ejecutamos el algoritmo seleccionado
-    print("\nEjecutando algoritmo...")
-    if args.algorithm == "kNN":
-        kNN(data)
-    elif args.algorithm == "decision_tree":
-        decision_tree(data)
-    elif args.algorithm == "random_forest":
-        random_forest(data)
+    if args.mode == "train":
+        # Descargamos los recursos necesarios de nltk
+        print("\nDescargando diccionarios...")
+        nltk.download('stopwords')
+        nltk.download('punkt')
+        nltk.download('wordnet')
+        # Cargamos los datos
+        print("\nCargando datos...")
+        data = load_data(args.file)
+        # Preprocesamos los datos
+        print("\nPreprocesando datos...")
+        data=preprocesar_datos(data, args)
+        # Ejecutamos el algoritmo seleccionado
+        print("\nEjecutando algoritmo...")
+        if args.algorithm == "kNN":
+            try:
+                kNN(data)
+                print("Algoritmo kNN ejecutado con éxito")
+                sys.exit(0)
+            except Exception as e:
+                print(e)
+        elif args.algorithm == "decision_tree":
+            try:
+                decision_tree(data)
+                print("Algoritmo árbol de decisión ejecutado con éxito")
+                sys.exit(0)
+            except Exception as e:
+                print(e)
+        elif args.algorithm == "random_forest":
+            try:
+                random_forest(data)
+                print("Algoritmo random forest ejecutado con éxito")
+                sys.exit(0)
+            except Exception as e:
+                print(e)
+        else:
+            print("Algoritmo no soportado")
+            sys.exit(1)
+    elif args.mode == "test":
+        pass
     else:
-        print("Algoritmo no soportado")
+        print("Modo no soportado")
         sys.exit(1)

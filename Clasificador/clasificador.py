@@ -53,7 +53,8 @@ def parse_args():
     parse.add_argument("-f", "--file", help="Fichero csv (Path)", required=True)
     parse.add_argument("-a", "--algorithm", help="Algoritmo a ejecutar (kNN, decision_tree o random_forest)", required=True)
     parse.add_argument("-p", "--prediction", help="Columna a predecir (Nombre de la columna)", required=True)
-    parse.add_argument("-v", "--verbose", help="Mostrar información adicional (True o False*)", required=False, default=False)
+    parse.add_argument("-v", "--verbose", help="Mostrar información adicional", required=False, default=False, action="store_true")
+    parse.add_argument("--debug", help="Modo debug", required=False, default=False, action="store_true")
     
     # Parseamos los argumentos
     args = parse.parse_args()
@@ -120,12 +121,24 @@ def calculate_confusion_matrix(y_test, y_pred):
 # Funciones para preprocesar los datos
 
 def select_features(data, args):
+    """
+    Esta función se encarga de seleccionar las características del conjunto de datos.
+
+    Parámetros:
+    - data: DataFrame que contiene los datos.
+    - args: Argumentos adicionales.
+
+    Retorna:
+    - numerical_feature: DataFrame que contiene las columnas numéricas del conjunto de datos.
+    - text_feature: DataFrame que contiene las columnas con texto del conjunto de datos.
+    - categorical_feature: DataFrame que contiene las columnas categóricas del conjunto de datos.
+    """
     try:
         numerical_feature = data.select_dtypes(include=['int64', 'float64']) # Columnas numéricas
         text_feature = data[data.columns[data.apply(lambda col: col.astype(str).str.contains(' ', na=False).any())]] # Columnas con texto
         categorical_feature = data.select_dtypes(include='object').drop(columns=text_feature.columns) # Columnas categóricas
         print("Datos separados con éxito")
-        if args.verbose == "True":
+        if args.debug:
             print("> Columnas numéricas:\n", numerical_feature.columns)
             print("> Columnas de texto:\n", text_feature.columns)
             print("> Columnas categóricas:\n", categorical_feature.columns)
@@ -173,7 +186,7 @@ def process_missing_values(data, args):
         print(e)
         sys.exit(1)
 
-def reescaler(data, numerical_data, args):
+def reescaler(data, numerical_feature, args):
     """
     Función que realiza el reescalado de los datos numéricos en un DataFrame.
 
@@ -186,18 +199,18 @@ def reescaler(data, numerical_data, args):
     None
     """
     try:
-        if numerical_data.columns.size > 0:
+        if numerical_feature.columns.size > 0:
             if args.preprocessing["scaling"] == "minmax":
                 scaler = MinMaxScaler()
-                data[numerical_data.columns] = scaler.fit_transform(data[numerical_data.columns])
+                data[numerical_feature.columns] = scaler.fit_transform(data[numerical_feature.columns])
                 print("Datos reescalados con éxito usando MinMaxScaler")
             elif args.preprocessing["scaling"] == "normalizer":
                 scaler = Normalizer()
-                data[numerical_data.columns] = scaler.fit_transform(data[numerical_data.columns])
+                data[numerical_feature.columns] = scaler.fit_transform(data[numerical_feature.columns])
                 print("Datos reescalados con éxito usando Normalizer")
             elif args.preprocessing["scaling"] == "maxabs":
                 scaler = MaxAbsScaler()
-                data[numerical_data.columns] = scaler.fit_transform(data[numerical_data.columns])
+                data[numerical_feature.columns] = scaler.fit_transform(data[numerical_feature.columns])
                 print("Datos reescalados con éxito usando MaxAbsScaler")
             else:
                 print("No se están escalando los datos")
@@ -208,7 +221,7 @@ def reescaler(data, numerical_data, args):
         print(e)
         sys.exit(1)
 
-def cat2num(data, categorical_data, args):
+def cat2num(data, categorical_feature, args):
     """
     Convierte las columnas categóricas de un DataFrame en columnas numéricas utilizando la técnica de codificación de etiquetas.
 
@@ -221,9 +234,9 @@ def cat2num(data, categorical_data, args):
     None
     """
     try:
-        if categorical_data.columns.size > 0:
+        if categorical_feature.columns.size > 0:
             labelencoder = LabelEncoder()
-            for col in categorical_data.columns:
+            for col in categorical_feature.columns:
                 data[col] = labelencoder.fit_transform(data[col])
             print("Datos categóricos pasados a numéricos con éxito")
         else:
@@ -233,7 +246,7 @@ def cat2num(data, categorical_data, args):
         print(e)
         sys.exit(1)
 
-def simplify_text(data, text_data):
+def simplify_text(data, text_feature):
     """
     Simplifica el texto en el DataFrame 'data' utilizando técnicas de procesamiento de lenguaje natural.
     
@@ -245,10 +258,10 @@ def simplify_text(data, text_data):
     None
     """
     try:
-        if text_data.columns.size > 0:
+        if text_feature.columns.size > 0:
             stop_words = set(stopwords.words('english'))
             stemmer = PorterStemmer()
-            for col in text_data.columns:
+            for col in text_feature.columns:
                 data[col] = data[col].apply(lambda x: ' '.join(sorted([stemmer.stem(word) for word in word_tokenize(x.lower()) if word not in stop_words and word not in string.punctuation])))
             print("Texto simplificado con éxito")
         else:
@@ -258,7 +271,7 @@ def simplify_text(data, text_data):
         print(e)
         sys.exit(1)
 
-def process_text(data, text_data, args):
+def process_text(data, text_feature, args):
     """
     Procesa el texto de los datos según la configuración especificada en args.
 
@@ -275,16 +288,16 @@ def process_text(data, text_data, args):
 
     """
     try:
-        if text_data.columns.size > 0:
+        if text_feature.columns.size > 0:
             if args.preprocessing["text_process"] == "tf-idf":
                 vectorizer = TfidfVectorizer()
-                text_features = vectorizer.fit_transform(data[text_data.columns].values.astype('U').flatten())
+                text_features = vectorizer.fit_transform(data[text_feature.columns].values.astype('U').flatten())
                 text_features_df = pd.DataFrame(text_features.toarray())
                 data = pd.concat([data, text_features_df], axis=1)
                 print("Texto tratado con éxito usando TF-IDF")
             elif args.preprocessing["text_process"] == "bow":
                 vectorizer = CountVectorizer()
-                text_features = vectorizer.fit_transform(data[text_data.columns].values.astype('U').flatten())
+                text_features = vectorizer.fit_transform(data[text_feature.columns].values.astype('U').flatten())
                 text_features_df = pd.DataFrame(text_features.toarray())
                 data = pd.concat([data, text_features_df], axis=1)
                 print("Texto tratado con éxito usando BOW")
@@ -344,12 +357,21 @@ def over_under_sampling(data, args):
         print(e)
         sys.exit(1)
 
+def drop_features(data, features):
+    try:
+        data = data.drop(columns=features)
+        print("Columnas eliminadas con éxito")
+    except Exception as e:
+        print("Error al eliminar columnas")
+        print(e)
+        sys.exit(1)
+
 def preprocesar_datos(data, args):
     """
     Función para preprocesar los datos
         1. Separamos los datos por tipos (Categoriales, numéricos y textos)
         2. Pasar los datos a categoriales a numéricos 
-        3. Tratamos missing values (Eliminar o imputar)
+        TODO 3. Tratamos missing values (Eliminar y imputar)
         4. Reescalamos los datos datos (MinMax, Normalizer, MaxAbsScaler)
         5. Simplificamos el texto (Normalizar, eliminar stopwords, stemming y ordenar alfabéticamente)
         TODO 6. Tratamos el texto (TF-IDF, BOW)
@@ -399,7 +421,72 @@ def preprocesar_datos(data, args):
 
     return data
 
-# Funciones para ejecutar los algoritmos
+# Funciones para entrenar un modelo
+def divide_data(data, args):
+    """
+    Función que divide los datos en conjuntos de entrenamiento y desarrollo.
+
+    Parámetros:
+    - data: DataFrame que contiene los datos.
+    - args: Objeto que contiene los argumentos necesarios para la división de datos.
+
+    Retorna:
+    - x_train: DataFrame con las características de entrenamiento.
+    - x_dev: DataFrame con las características de desarrollo.
+    - y_train: Serie con las etiquetas de entrenamiento.
+    - y_dev: Serie con las etiquetas de desarrollo.
+    """
+    # Sacamos la columna a predecir
+    y = data[args.prediction]
+    x = data.drop(columns=[args.prediction])
+    
+    # Dividimos los datos en entrenamiento y dev
+    x_train, x_dev, y_train, y_dev = train_test_split(x, y, test_size=0.25, random_state=0)
+    return x_train, x_dev, y_train, y_dev
+
+def save_model(gs):
+    """
+    Guarda el modelo de clasificación en un archivo llamado 'model.pkl'.
+
+    Parámetros:
+    - gs: El modelo de clasificación a guardar.
+
+    Excepciones:
+    - Exception: Se produce si hay un error al guardar el modelo.
+
+    """
+    try:
+        with open('model.pkl', 'wb') as file:
+            pickle.dump(gs, file)
+            print("Modelo guardado con éxito")
+    except Exception as e:
+        print("Error al guardar el modelo")
+        print(e)
+
+def mostrar_resultados(gs, x_dev, y_dev):
+    """
+    Muestra los resultados del clasificador.
+
+    Parámetros:
+    - gs: objeto GridSearchCV, el clasificador con la búsqueda de hiperparámetros.
+    - x_dev: array-like, las características del conjunto de desarrollo.
+    - y_dev: array-like, las etiquetas del conjunto de desarrollo.
+
+    Imprime en la consola los siguientes resultados:
+    - Mejores parámetros encontrados por la búsqueda de hiperparámetros.
+    - Mejor puntuación obtenida por el clasificador.
+    - F1-score micro del clasificador en el conjunto de desarrollo.
+    - F1-score macro del clasificador en el conjunto de desarrollo.
+    - Informe de clasificación del clasificador en el conjunto de desarrollo.
+    - Matriz de confusión del clasificador en el conjunto de desarrollo.
+    """
+    if args.verbose:
+        print("> Mejores parametros:\n", gs.best_params_)
+        print("> Mejor puntuacion:\n", gs.best_score_)
+        print("> F1-score micro:\n", calculate_fscore(y_dev, gs.predict(x_dev))[0])
+        print("> F1-score macro:\n", calculate_fscore(y_dev, gs.predict(x_dev))[1])
+        print("> Informe de clasificación:\n", calculate_classification_report(y_dev, gs.predict(x_dev)))
+        print("> Matriz de confusión:\n", calculate_confusion_matrix(y_dev, gs.predict(x_dev)))
 
 def kNN(data):
     """
@@ -411,12 +498,8 @@ def kNN(data):
     :return: Tupla con la clasificación de los datos.
     :rtype: tuple
     """
-    # Sacamos la columna a predecir
-    y = data[args.prediction]
-    x = data.drop(columns=[args.prediction])
-    
     # Dividimos los datos en entrenamiento y dev
-    x_train, x_dev, y_train, y_dev = train_test_split(x, y, test_size=0.25, random_state=0)
+    x_train, x_dev, y_train, y_dev = divide_data(data, args)
     
     # Hacemos un barrido de hiperparametros
     gs = GridSearchCV(KNeighborsClassifier(), args.kNN, cv=5, n_jobs=-1, )
@@ -427,22 +510,10 @@ def kNN(data):
     print("Tiempo de ejecución:\n", execution_time, "segundos")
     
     # Guardamos el modelo utilizando pickle
-    try:
-        with open('kNN.pkl', 'wb') as file:
-            pickle.dump(gs, file)
-            print("Modelo guardado con éxito")
-    except Exception as e:
-        print("Error al guardar el modelo")
-        print(e)
+    save_model(gs)
     
     # Mostramos los resultados
-    if args.verbose == "True":
-        print("> Mejores parametros:\n", gs.best_params_)
-        print("> Mejor puntuacion:\n", gs.best_score_)
-        print("> F1-score micro:\n", calculate_fscore(y_dev, gs.predict(x_dev))[0])
-        print("> F1-score macro:\n", calculate_fscore(y_dev, gs.predict(x_dev))[1])
-        print("> Informe de clasificación:\n", calculate_classification_report(y_dev, gs.predict(x_dev)))
-        print("> Matriz de confusión:\n", calculate_confusion_matrix(y_dev, gs.predict(x_dev)))
+    mostrar_resultados(gs, x_dev, y_dev)
 
 def decision_tree(data):
     """
@@ -453,12 +524,8 @@ def decision_tree(data):
     :return: Tupla con la clasificación de los datos.
     :rtype: tuple
     """
-    # Sacamos la columna a predecir
-    y = data[args.prediction]
-    x = data.drop(columns=[args.prediction])
-    
     # Dividimos los datos en entrenamiento y dev
-    x_train, x_dev, y_train, y_dev = train_test_split(x, y, test_size=0.25, random_state=0)
+    x_train, x_dev, y_train, y_dev = divide_data(data, args)
     
     # Hacemos un barrido de hiperparametros
     gs = GridSearchCV(DecisionTreeClassifier(), args.decision_tree, cv=5, n_jobs=-1,)
@@ -469,22 +536,10 @@ def decision_tree(data):
     print("Tiempo de ejecución:\n", execution_time, "segundos")
     
     # Guardamos el modelo utilizando pickle
-    try:
-        with open('decision_tree.pkl', 'wb') as file:
-            pickle.dump(gs, file)
-            print("Modelo guardado con éxito")
-    except Exception as e:
-        print("Error al guardar el modelo")
-        print(e)
+    save_model(gs)
         
     # Mostramos los resultados
-    if args.verbose:
-        print("> Mejores parametros:\n", gs.best_params_)
-        print("> Mejor puntuacion:\n", gs.best_score_)
-        print("> F1-score micro:\n", calculate_fscore(y_dev, gs.predict(x_dev))[0])
-        print("> F1-score macro:\n", calculate_fscore(y_dev, gs.predict(x_dev))[1])
-        print("> Informe de clasificación:\n", calculate_classification_report(y_dev, gs.predict(x_dev)))
-        print("> Matriz de confusión:\n", calculate_confusion_matrix(y_dev, gs.predict(x_dev)))
+    mostrar_resultados(gs, x_dev, y_dev)
     
 def random_forest(data):
     """
@@ -497,12 +552,8 @@ def random_forest(data):
     :return: Tupla con la clasificación de los datos.
     :rtype: tuple
     """
-    # Sacamos la columna a predecir
-    y = data[args.prediction]
-    x = data.drop(columns=[args.prediction])
-    
     # Dividimos los datos en entrenamiento y dev
-    x_train, x_dev, y_train, y_dev = train_test_split(x, y, test_size=0.25, random_state=0)
+    x_train, x_dev, y_train, y_dev = divide_data(data, args)
     
     # Hacemos un barrido de hiperparametros
     gs = GridSearchCV(RandomForestClassifier(), args.random_forest, cv=5, n_jobs=-1,)
@@ -513,22 +564,10 @@ def random_forest(data):
     print("Tiempo de ejecución:\n", execution_time, "segundos")
     
     # Guardamos el modelo utilizando pickle
-    try:
-        with open('random_forest.pkl', 'wb') as file:
-            pickle.dump(gs, file)
-            print("Modelo guardado con éxito")
-    except Exception as e:
-        print("Error al guardar el modelo")
-        print(e)
+    save_model(gs)
     
     # Mostramos los resultados
-    if args.verbose == "True":
-        print("> Mejores parametros:\n", gs.best_params_)
-        print("> Mejor puntuacion:\n", gs.best_score_)
-        print("> F1-score micro:\n", calculate_fscore(y_dev, gs.predict(x_dev))[0])
-        print("> F1-score macro:\n", calculate_fscore(y_dev, gs.predict(x_dev))[1])
-        print("> Informe de clasificación:\n", calculate_classification_report(y_dev, gs.predict(x_dev)))
-        print("> Matriz de confusión:\n", calculate_confusion_matrix(y_dev, gs.predict(x_dev)))
+    mostrar_resultados(gs, x_dev, y_dev)
 
 # Función principal
 

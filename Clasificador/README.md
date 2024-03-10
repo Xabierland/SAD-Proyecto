@@ -25,7 +25,7 @@ pip install -r requirements.txt
 ```bash
 python clasificador.py --help
 === Clasificador ===
-usage: clasificador.py [-h] [-m MODE] -f FILE -a ALGORITHM -p PREDICTION [-v VERBOSE]
+usage: clasificador.py [-h] [-m MODE] -f FILE -a ALGORITHM -p PREDICTION [-v] [--debug]
 
 Practica de algoritmos de clasificación de datos.
 
@@ -37,8 +37,8 @@ optional arguments:
                         Algoritmo a ejecutar (kNN, decision_tree o random_forest)
   -p PREDICTION, --prediction PREDICTION
                         Columna a predecir (Nombre de la columna)
-  -v VERBOSE, --verbose VERBOSE
-                        Mostrar información adicional (True o False*)
+  -v, --verbose         Mostrar información adicional
+  --debug               Modo debug
 ```
 
 ## Ejemplo

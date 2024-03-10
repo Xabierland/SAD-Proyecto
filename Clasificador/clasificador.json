@@ -1,9 +1,10 @@
 {
     "preprocessing": {
+        "drop_features": [],
         "missing_values": "impute",
         "impute_strategy": "mean",
         "scaling": "normalizer",
-        "text_process": "bow",
+        "text_process": "tf-idf",
         "sampling": "undersampling"
     },
     "kNN": {

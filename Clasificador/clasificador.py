@@ -163,6 +163,7 @@ def process_missing_values():
     - Exception: Si ocurre algún error al procesar los valores faltantes.
 
     """
+    global data
     try:
         if args.preprocessing["missing_values"] == "drop":
             data = data.dropna()

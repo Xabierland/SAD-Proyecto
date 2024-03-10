@@ -32,13 +32,13 @@ Practica de algoritmos de clasificación de datos.
 optional arguments:
   -h, --help            show this help message and exit
   -m MODE, --mode MODE  Modo de ejecución (train* o test)
-  -f FILE, --file FILE  Fichero csv
+  -f FILE, --file FILE  Fichero csv (Path)
   -a ALGORITHM, --algorithm ALGORITHM
                         Algoritmo a ejecutar (kNN, decision_tree o random_forest)
   -p PREDICTION, --prediction PREDICTION
-                        Columna a predecir
+                        Columna a predecir (Nombre de la columna)
   -v VERBOSE, --verbose VERBOSE
-                        Mostrar información adicional
+                        Mostrar información adicional (True o False*)
 ```
 
 ## Ejemplo

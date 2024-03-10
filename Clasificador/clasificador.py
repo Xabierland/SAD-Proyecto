@@ -46,10 +46,10 @@ def parse_args():
     """
     parse = argparse.ArgumentParser(description="Practica de algoritmos de clasificación de datos.")
     parse.add_argument("-m", "--mode", help="Modo de ejecución (train* o test)", required=False, default="train")
-    parse.add_argument("-f", "--file", help="Fichero csv", required=True)
+    parse.add_argument("-f", "--file", help="Fichero csv (Path)", required=True)
     parse.add_argument("-a", "--algorithm", help="Algoritmo a ejecutar (kNN, decision_tree o random_forest)", required=True)
-    parse.add_argument("-p", "--prediction", help="Columna a predecir", required=True)
-    parse.add_argument("-v", "--verbose", help="Mostrar información adicional", required=False, default=False)
+    parse.add_argument("-p", "--prediction", help="Columna a predecir (Nombre de la columna)", required=True)
+    parse.add_argument("-v", "--verbose", help="Mostrar información adicional (True o False*)", required=False, default=False)
     
     # Parseamos los argumentos
     args = parse.parse_args()

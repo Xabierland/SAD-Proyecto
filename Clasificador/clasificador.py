@@ -120,7 +120,7 @@ def calculate_confusion_matrix(y_test, y_pred):
 
 # Funciones para preprocesar los datos
 
-def select_features(data, args):
+def select_features():
     """
     Esta función se encarga de seleccionar las características del conjunto de datos.
 
@@ -148,7 +148,7 @@ def select_features(data, args):
         print(e)
         sys.exit(1)
 
-def process_missing_values(data, args):
+def process_missing_values():
     """
     Procesa los valores faltantes en los datos según la estrategia especificada en los argumentos.
 
@@ -186,7 +186,7 @@ def process_missing_values(data, args):
         print(e)
         sys.exit(1)
 
-def reescaler(data, numerical_feature, args):
+def reescaler(numerical_feature):
     """
     Función que realiza el reescalado de los datos numéricos en un DataFrame.
 
@@ -221,7 +221,7 @@ def reescaler(data, numerical_feature, args):
         print(e)
         sys.exit(1)
 
-def cat2num(data, categorical_feature, args):
+def cat2num(categorical_feature):
     """
     Convierte las columnas categóricas de un DataFrame en columnas numéricas utilizando la técnica de codificación de etiquetas.
 
@@ -246,7 +246,7 @@ def cat2num(data, categorical_feature, args):
         print(e)
         sys.exit(1)
 
-def simplify_text(data, text_feature):
+def simplify_text(text_feature):
     """
     Simplifica el texto en el DataFrame 'data' utilizando técnicas de procesamiento de lenguaje natural.
     
@@ -271,7 +271,7 @@ def simplify_text(data, text_feature):
         print(e)
         sys.exit(1)
 
-def process_text(data, text_feature, args):
+def process_text(text_feature):
     """
     Procesa el texto de los datos según la configuración especificada en args.
 
@@ -310,7 +310,7 @@ def process_text(data, text_feature, args):
         print(e)
         sys.exit(1)
 
-def over_under_sampling(data, args):
+def over_under_sampling():
     """
     Realiza oversampling o undersampling en el conjunto de datos dado en función del método de preprocesamiento especificado.
 
@@ -357,7 +357,7 @@ def over_under_sampling(data, args):
         print(e)
         sys.exit(1)
 
-def drop_features(data, features):
+def drop_features(features):
     try:
         data = data.drop(columns=features)
         print("Columnas eliminadas con éxito")
@@ -366,7 +366,7 @@ def drop_features(data, features):
         print(e)
         sys.exit(1)
 
-def preprocesar_datos(data, args):
+def preprocesar_datos():
     """
     Función para preprocesar los datos
         1. Separamos los datos por tipos (Categoriales, numéricos y textos)
@@ -376,53 +376,53 @@ def preprocesar_datos(data, args):
         5. Simplificamos el texto (Normalizar, eliminar stopwords, stemming y ordenar alfabéticamente)
         TODO 6. Tratamos el texto (TF-IDF, BOW)
         TODO 7. Realizamos Oversampling o Undersampling
+        TODO 8. Borrar columnas no necesarias
     :param data: Datos a preprocesar
     :return: Datos preprocesados y divididos en train y test
     """
 
     if args.algorithm == "kNN":
-        # 1 Separamos los datos por tipos
-        numerical_feature, text_feature, categorical_feature = select_features(data, args)
+        # Separamos los datos por tipos
+        numerical_feature, text_feature, categorical_feature = select_features()
         
-        # 2 Pasar los datos a categoriales a numéricos
-        cat2num(data, categorical_feature, args)
+        # Pasar los datos a categoriales a numéricos
+        cat2num(categorical_feature)
 
-        # 3 Tratamos missing values
-        process_missing_values(data, args)
+        # Tratamos missing values
+        process_missing_values()
 
-        # 4 Reescalamos los datos numéricos
-        reescaler(data, numerical_feature, args)
+        # Reescalamos los datos numéricos
+        reescaler(numerical_feature)
         
-        # 7 Realizamos Oversampling o Undersampling
-        over_under_sampling(data, args)
-    elif args.algorithm == "decision_tree":
-        # 1 Separamos los datos por tipos
-        numerical_feature, text_feature, categorical_feature = select_features(data, args)
+        # Realizamos Oversampling o Undersampling
+        over_under_sampling()
+    elif args.algorithm == "decision_tree" or args.algorithm == "random_forest":
+        # Separamos los datos por tipos
+        numerical_feature, text_feature, categorical_feature = select_features()
 
-        # 2 Pasar los datos a categoriales a numéricos
-        cat2num(data, categorical_feature, args)
+        # Pasar los datos a categoriales a numéricos
+        cat2num(categorical_feature)
 
-        # 5 Simplificamos el texto
-        simplify_text(data, text_feature)
+        # Simplificamos el texto
+        simplify_text(text_feature)
 
-        # 6 Tratamos el texto
-        process_text(data, text_feature, args)
+        # Tratamos el texto
+        process_text(text_feature)
 
-        # 7 Realizamos Oversampling o Undersampling
-        over_under_sampling(data, args)
-    elif args.algorithm == "random_forest":
-        pass
+        # Realizamos Oversampling o Undersampling
+        over_under_sampling()
     else:
         print("Algoritmo no soportado")
         sys.exit(1)
     
     # ! Just for testing
-    data.to_csv('datos/data.csv', index=False)
+    if args.debug:
+        data.to_csv('datos/data.csv', index=False)
 
     return data
 
 # Funciones para entrenar un modelo
-def divide_data(data, args):
+def divide_data():
     """
     Función que divide los datos en conjuntos de entrenamiento y desarrollo.
 
@@ -488,7 +488,7 @@ def mostrar_resultados(gs, x_dev, y_dev):
         print("> Informe de clasificación:\n", calculate_classification_report(y_dev, gs.predict(x_dev)))
         print("> Matriz de confusión:\n", calculate_confusion_matrix(y_dev, gs.predict(x_dev)))
 
-def kNN(data):
+def kNN():
     """
     Función para implementar el algoritmo kNN.
     Hace un barrido de hiperparametros para encontrar los parametros optimos
@@ -499,7 +499,7 @@ def kNN(data):
     :rtype: tuple
     """
     # Dividimos los datos en entrenamiento y dev
-    x_train, x_dev, y_train, y_dev = divide_data(data, args)
+    x_train, x_dev, y_train, y_dev = divide_data()
     
     # Hacemos un barrido de hiperparametros
     gs = GridSearchCV(KNeighborsClassifier(), args.kNN, cv=5, n_jobs=-1, )
@@ -515,7 +515,7 @@ def kNN(data):
     # Mostramos los resultados
     mostrar_resultados(gs, x_dev, y_dev)
 
-def decision_tree(data):
+def decision_tree():
     """
     Función para implementar el algoritmo de árbol de decisión.
 
@@ -525,7 +525,7 @@ def decision_tree(data):
     :rtype: tuple
     """
     # Dividimos los datos en entrenamiento y dev
-    x_train, x_dev, y_train, y_dev = divide_data(data, args)
+    x_train, x_dev, y_train, y_dev = divide_data()
     
     # Hacemos un barrido de hiperparametros
     gs = GridSearchCV(DecisionTreeClassifier(), args.decision_tree, cv=5, n_jobs=-1,)
@@ -541,7 +541,7 @@ def decision_tree(data):
     # Mostramos los resultados
     mostrar_resultados(gs, x_dev, y_dev)
     
-def random_forest(data):
+def random_forest():
     """
     Función para implementar el algoritmo de random forest.
 
@@ -553,7 +553,7 @@ def random_forest(data):
     :rtype: tuple
     """
     # Dividimos los datos en entrenamiento y dev
-    x_train, x_dev, y_train, y_dev = divide_data(data, args)
+    x_train, x_dev, y_train, y_dev = divide_data()
     
     # Hacemos un barrido de hiperparametros
     gs = GridSearchCV(RandomForestClassifier(), args.random_forest, cv=5, n_jobs=-1,)
@@ -588,26 +588,26 @@ if __name__ == "__main__":
         nltk.download('wordnet')
         # Preprocesamos los datos
         print("\n- Preprocesando datos...")
-        data=preprocesar_datos(data, args)
+        preprocesar_datos()
         # Ejecutamos el algoritmo seleccionado
         print("\n- Ejecutando algoritmo...")
         if args.algorithm == "kNN":
             try:
-                kNN(data)
+                kNN()
                 print("Algoritmo kNN ejecutado con éxito")
                 sys.exit(0)
             except Exception as e:
                 print(e)
         elif args.algorithm == "decision_tree":
             try:
-                decision_tree(data)
+                decision_tree()
                 print("Algoritmo árbol de decisión ejecutado con éxito")
                 sys.exit(0)
             except Exception as e:
                 print(e)
         elif args.algorithm == "random_forest":
             try:
-                random_forest(data)
+                random_forest()
                 print("Algoritmo random forest ejecutado con éxito")
                 sys.exit(0)
             except Exception as e:

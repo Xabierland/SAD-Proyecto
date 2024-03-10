@@ -14,6 +14,7 @@ import imblearn
 import pickle
 import time
 import json
+import multiprocessing
 # Sklearn
 from sklearn.calibration import LabelEncoder
 from sklearn.metrics import f1_score, confusion_matrix, classification_report
@@ -105,7 +106,7 @@ def calculate_classification_report(y_test, y_pred):
     :param y_pred: Valores predichos
     :return: Informe de clasificación
     """
-    report = classification_report(y_test, y_pred)
+    report = classification_report(y_test, y_pred, zero_division=0)
     return report
 
 def calculate_confusion_matrix(y_test, y_pred):
@@ -266,7 +267,7 @@ def simplify_text(text_feature):
                 data[col] = data[col].apply(lambda x: ' '.join(sorted([stemmer.stem(word) for word in word_tokenize(x.lower()) if word not in stop_words and word not in string.punctuation])))
             print("Texto simplificado con éxito")
         else:
-            print("No se han encontrado columnas de texto")
+            print("No se han encontrado columnas de texto a simplificar")
     except Exception as e:
         print("Error al simplificar el texto")
         print(e)
@@ -305,7 +306,7 @@ def process_text(text_feature):
             else:
                 print("No se están tratando los textos")
         else:
-            print("No se han encontrado columnas de texto")
+            print("No se han encontrado columnas de texto a procesar")
     except Exception as e:
         print("Error al tratar el texto")
         print(e)
@@ -381,14 +382,13 @@ def preprocesar_datos():
     :param data: Datos a preprocesar
     :return: Datos preprocesados y divididos en train y test
     """
+    # Separamos los datos por tipos
+    numerical_feature, text_feature, categorical_feature = select_features()
+
+    # Pasar los datos a categoriales a numéricos
+    cat2num(categorical_feature)
 
     if args.algorithm == "kNN":
-        # Separamos los datos por tipos
-        numerical_feature, text_feature, categorical_feature = select_features()
-        
-        # Pasar los datos a categoriales a numéricos
-        cat2num(categorical_feature)
-
         # Tratamos missing values
         process_missing_values()
 
@@ -398,12 +398,6 @@ def preprocesar_datos():
         # Realizamos Oversampling o Undersampling
         over_under_sampling()
     elif args.algorithm == "decision_tree" or args.algorithm == "random_forest":
-        # Separamos los datos por tipos
-        numerical_feature, text_feature, categorical_feature = select_features()
-
-        # Pasar los datos a categoriales a numéricos
-        cat2num(categorical_feature)
-
         # Simplificamos el texto
         simplify_text(text_feature)
 

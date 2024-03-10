@@ -219,7 +219,7 @@ def kNN(data):
     x = data.drop(columns=[args.prediction])
     
     # Dividimos los datos en entrenamiento y dev
-    x_train, x_dev, y_train, y_dev = train_test_split(x, y, test_size=0.25)
+    x_train, x_dev, y_train, y_dev = train_test_split(x, y, test_size=0.25, random_state=0)
     
     # Hacemos un barrido de hiperparametros
     gs = GridSearchCV(KNeighborsClassifier(), args.kNN, cv=5, n_jobs=-1,)
@@ -252,7 +252,7 @@ def decision_tree(data):
     x = data.drop(columns=[args.prediction])
     
     # Dividimos los datos en entrenamiento y dev
-    x_train, x_dev, y_train, y_dev = train_test_split(x, y, test_size=0.25)
+    x_train, x_dev, y_train, y_dev = train_test_split(x, y, test_size=0.25, random_state=0)
     
     # Hacemos un barrido de hiperparametros
     gs = GridSearchCV(DecisionTreeClassifier(), args.decision_tree, cv=5, n_jobs=-1,)
@@ -287,7 +287,7 @@ def random_forest(data):
     x = data.drop(columns=[args.prediction])
     
     # Dividimos los datos en entrenamiento y dev
-    x_train, x_dev, y_train, y_dev = train_test_split(x, y, test_size=0.25)
+    x_train, x_dev, y_train, y_dev = train_test_split(x, y, test_size=0.25, random_state=0)
     
     # Hacemos un barrido de hiperparametros
     gs = GridSearchCV(RandomForestClassifier(), args.random_forest, cv=5, n_jobs=-1,)

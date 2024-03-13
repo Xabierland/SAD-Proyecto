@@ -1,5 +1,6 @@
 # My ingore
 *.pkl
+model.csv
 data.csv
 
 # Byte-compiled / optimized / DLL files

@@ -15,6 +15,7 @@ import pickle
 import time
 import json
 import multiprocessing
+import csv
 # Sklearn
 from sklearn.calibration import LabelEncoder
 from sklearn.metrics import f1_score, confusion_matrix, classification_report
@@ -417,6 +418,7 @@ def preprocesar_datos():
     return data
 
 # Funciones para entrenar un modelo
+
 def divide_data():
     """
     Función que divide los datos en conjuntos de entrenamiento y desarrollo.
@@ -441,19 +443,24 @@ def divide_data():
 
 def save_model(gs):
     """
-    Guarda el modelo de clasificación en un archivo llamado 'model.pkl'.
+    Guarda el modelo y los resultados de la búsqueda de hiperparámetros en archivos.
 
     Parámetros:
-    - gs: El modelo de clasificación a guardar.
+    - gs: objeto GridSearchCV, el cual contiene el modelo entrenado y los resultados de la búsqueda de hiperparámetros.
 
     Excepciones:
-    - Exception: Se produce si hay un error al guardar el modelo.
+    - Exception: Si ocurre algún error al guardar el modelo.
 
     """
     try:
         with open('model.pkl', 'wb') as file:
             pickle.dump(gs, file)
             print("Modelo guardado con éxito")
+        with open('model.csv', 'w') as file:
+            writer = csv.writer(file)
+            writer.writerow(['Params', 'Score'])
+            for params, score in zip(gs.cv_results_['params'], gs.cv_results_['mean_test_score']):
+                writer.writerow([params, score])
     except Exception as e:
         print("Error al guardar el modelo")
         print(e)
@@ -564,6 +571,35 @@ def random_forest():
     # Mostramos los resultados
     mostrar_resultados(gs, x_dev, y_dev)
 
+# Funciones para predecir con un modelo
+
+def load_model():
+    """
+    Función para cargar un modelo desde un archivo.
+
+    Parámetros:
+    - file: str, la ruta al archivo que contiene el modelo.
+
+    Retorna:
+    - model: el modelo cargado desde el archivo.
+
+    Lanza:
+    - Exception: Si ocurre un error al cargar el modelo.
+
+    """
+    try:
+        with open(file, 'rb') as file:
+            model = pickle.load(file)
+            print("Modelo cargado con éxito")
+            return model
+    except Exception as e:
+        print("Error al cargar el modelo")
+        print(e)
+        sys.exit(1)
+        
+def predict():
+    pass
+
 # Función principal
 
 if __name__ == "__main__":
@@ -611,7 +647,14 @@ if __name__ == "__main__":
             print("Algoritmo no soportado")
             sys.exit(1)
     elif args.mode == "test":
-        pass
+        # Cargamos los datos
+        data = load_data(args.file)
+        
+        # Cargamos el modelo
+        model = load_model(args.model)
+        
+        # Predecimos
+        predict()
     else:
         print("Modo no soportado")
         sys.exit(1)

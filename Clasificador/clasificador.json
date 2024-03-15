@@ -5,14 +5,14 @@
         "impute_strategy": "mean",
         "scaling": "normalizer",
         "text_process": null,
-        "sampling": null
+        "sampling": "oversampling"
     },
     "kNN": {
-        "n_neighbors": [3, 4, 5, 6, 7, 8, 9, 10, 11],
+        "n_neighbors": [3, 5, 7],
         "weights": ["uniform", "distance"],
-        "algorithm": ["auto", "ball_tree", "kd_tree", "brute"],
-        "leaf_size": [10, 20, 30, 40, 50],
-        "p": [1, 2]
+        "algorithm": ["auto"],
+        "leaf_size": [30],
+        "p": [2]
     },
     "decision_tree": {
         "criterion": ["gini", "entropy"],

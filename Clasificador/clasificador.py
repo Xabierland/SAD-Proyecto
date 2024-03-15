@@ -137,6 +137,7 @@ def select_features():
     """
     try:
         numerical_feature = data.select_dtypes(include=['int64', 'float64']) # Columnas numéricas
+        numerical_feature = numerical_feature.drop(columns=args.prediction) # Eliminamos la columna a predecir
         text_feature = data[data.columns[data.apply(lambda col: col.astype(str).str.contains(' ', na=False).any())]] # Columnas con texto
         categorical_feature = data.select_dtypes(include='object').drop(columns=text_feature.columns) # Columnas categóricas
         print("Datos separados con éxito")
@@ -201,6 +202,7 @@ def reescaler(numerical_feature):
     Retorna:
     None
     """
+    global data
     try:
         if numerical_feature.columns.size > 0:
             if args.preprocessing["scaling"] == "minmax":
@@ -236,6 +238,7 @@ def cat2num(categorical_feature):
     Retorna:
     None
     """
+    global data
     try:
         if categorical_feature.columns.size > 0:
             labelencoder = LabelEncoder()
@@ -260,6 +263,7 @@ def simplify_text(text_feature):
     Retorna:
     None
     """
+    global data
     try:
         if text_feature.columns.size > 0:
             stop_words = set(stopwords.words('english'))
@@ -290,6 +294,7 @@ def process_text(text_feature):
     - Exception: Si ocurre un error al procesar el texto.
 
     """
+    global data
     try:
         if text_feature.columns.size > 0:
             if args.preprocessing["text_process"] == "tf-idf":
@@ -328,26 +333,27 @@ def over_under_sampling():
         Exception: Si ocurre un error durante el oversampling o undersampling.
 
     """
+    global data
     try:
         if args.preprocessing["sampling"] == "oversampling":
-            ros = RandomOverSampler()
+            ros = RandomOverSampler(sampling_strategy='minority')
             x = data.drop(columns=[args.prediction])
             y = data[args.prediction]
             # Convertir la variable objetivo a categórica
-            label_encoder = LabelEncoder()
-            y = label_encoder.fit_transform(y)
+            #label_encoder = LabelEncoder()
+            #y = label_encoder.fit_transform(y)
             x, y = ros.fit_resample(x, y)
             x = pd.DataFrame(x, columns=data.drop(columns=[args.prediction]).columns)
             y = pd.Series(y, name=args.prediction)
             data = pd.concat([x, y], axis=1)
             print("Oversampling realizado con éxito")
         elif args.preprocessing["sampling"] == "undersampling":
-            rus = RandomUnderSampler()
+            rus = RandomUnderSampler(sampling_strategy='majority')
             x = data.drop(columns=[args.prediction])
             y = data[args.prediction]
             # Convertir la variable objetivo a categórica
-            label_encoder = LabelEncoder()
-            y = label_encoder.fit_transform(y)
+            #label_encoder = LabelEncoder()
+            #y = label_encoder.fit_transform(y)
             x, y = rus.fit_resample(x, y)
             x = pd.DataFrame(x, columns=data.drop(columns=[args.prediction]).columns)
             y = pd.Series(y, name=args.prediction)
@@ -361,6 +367,7 @@ def over_under_sampling():
         sys.exit(1)
 
 def drop_features(features):
+    global data
     try:
         data = data.drop(columns=features)
         print("Columnas eliminadas con éxito")

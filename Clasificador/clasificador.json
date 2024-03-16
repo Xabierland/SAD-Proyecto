@@ -1,5 +1,6 @@
 {
     "preprocessing": {
+        "unique_category_threshold": 50,
         "drop_features": [],
         "missing_values": "impute",
         "impute_strategy": "mean",

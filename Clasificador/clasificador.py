@@ -7,14 +7,11 @@ Script para la implementación del algoritmo de clasificación
 import sys
 import signal
 import argparse
-import numpy
 import pandas as pd
 import string
-import imblearn
 import pickle
 import time
 import json
-import multiprocessing
 import csv
 # Sklearn
 from sklearn.calibration import LabelEncoder
@@ -124,23 +121,27 @@ def calculate_confusion_matrix(y_test, y_pred):
 
 def select_features():
     """
-    Esta función se encarga de seleccionar las características del conjunto de datos.
+    Separa las características del conjunto de datos en características numéricas, de texto y categóricas.
 
-    Parámetros:
-    - data: DataFrame que contiene los datos.
-    - args: Argumentos adicionales.
-
-    Retorna:
-    - numerical_feature: DataFrame que contiene las columnas numéricas del conjunto de datos.
-    - text_feature: DataFrame que contiene las columnas con texto del conjunto de datos.
-    - categorical_feature: DataFrame que contiene las columnas categóricas del conjunto de datos.
+    Returns:
+        numerical_feature (DataFrame): DataFrame que contiene las características numéricas.
+        text_feature (DataFrame): DataFrame que contiene las características de texto.
+        categorical_feature (DataFrame): DataFrame que contiene las características categóricas.
     """
     try:
+        # Numerical features
         numerical_feature = data.select_dtypes(include=['int64', 'float64']) # Columnas numéricas
-        numerical_feature = numerical_feature.drop(columns=args.prediction) # Eliminamos la columna a predecir
-        text_feature = data[data.columns[data.apply(lambda col: col.astype(str).str.contains(' ', na=False).any())]] # Columnas con texto
-        categorical_feature = data.select_dtypes(include='object').drop(columns=text_feature.columns) # Columnas categóricas
+        if args.prediction in numerical_feature.columns:
+            numerical_feature = numerical_feature.drop(columns=[args.prediction])
+        # Categorical features
+        categorical_feature = data.select_dtypes(include='object')
+        categorical_feature = categorical_feature.loc[:, categorical_feature.nunique() <= args.preprocessing["unique_category_threshold"]]
+        
+        # Text features
+        text_feature = data.select_dtypes(include='object').drop(columns=categorical_feature.columns)
+
         print("Datos separados con éxito")
+        
         if args.debug:
             print("> Columnas numéricas:\n", numerical_feature.columns)
             print("> Columnas de texto:\n", text_feature.columns)
@@ -155,16 +156,14 @@ def process_missing_values():
     """
     Procesa los valores faltantes en los datos según la estrategia especificada en los argumentos.
 
-    Parámetros:
-    - data: DataFrame, los datos a procesar.
-    - args: dict, los argumentos que contienen la estrategia de procesamiento de valores faltantes.
+    Args:
+        None
 
-    Retorna:
-    - data: DataFrame, los datos procesados.
+    Returns:
+        None
 
-    Lanza:
-    - Exception: Si ocurre algún error al procesar los valores faltantes.
-
+    Raises:
+        None
     """
     global data
     try:
@@ -192,15 +191,17 @@ def process_missing_values():
 
 def reescaler(numerical_feature):
     """
-    Función que realiza el reescalado de los datos numéricos en un DataFrame.
+    Rescala las características numéricas en el conjunto de datos utilizando diferentes métodos de escala.
 
-    Parámetros:
-    - data: DataFrame que contiene los datos a reescalar.
-    - numerical_data: DataFrame que contiene las columnas numéricas del DataFrame original.
-    - args: Diccionario que contiene los argumentos de preprocesamiento.
+    Args:
+        numerical_feature (DataFrame): El dataframe que contiene las características numéricas.
 
-    Retorna:
-    None
+    Returns:
+        None
+
+    Raises:
+        Exception: Si hay un error al reescalar los datos.
+
     """
     global data
     try:
@@ -228,15 +229,11 @@ def reescaler(numerical_feature):
 
 def cat2num(categorical_feature):
     """
-    Convierte las columnas categóricas de un DataFrame en columnas numéricas utilizando la técnica de codificación de etiquetas.
+    Convierte las características categóricas en características numéricas utilizando la codificación de etiquetas.
 
     Parámetros:
-    - data: DataFrame - El DataFrame que contiene los datos.
-    - categorical_data: DataFrame - El DataFrame que contiene las columnas categóricas a convertir.
-    - args: dict - Argumentos adicionales (opcional).
+    categorical_feature (DataFrame): El DataFrame que contiene las características categóricas a convertir.
 
-    Retorna:
-    None
     """
     global data
     try:
@@ -280,18 +277,10 @@ def simplify_text(text_feature):
 
 def process_text(text_feature):
     """
-    Procesa el texto de los datos según la configuración especificada en args.
+    Procesa las características de texto utilizando técnicas de vectorización como TF-IDF o BOW.
 
     Parámetros:
-    - data: DataFrame de pandas. Los datos de entrada.
-    - text_data: DataFrame de pandas. Las columnas de texto en los datos.
-    - args: Diccionario. La configuración de procesamiento de texto.
-
-    Retorna:
-    - data: DataFrame de pandas. Los datos de entrada con las características de texto procesadas.
-
-    Lanza:
-    - Exception: Si ocurre un error al procesar el texto.
+    text_feature (pandas.DataFrame): Un DataFrame que contiene las características de texto a procesar.
 
     """
     global data
@@ -299,13 +288,13 @@ def process_text(text_feature):
         if text_feature.columns.size > 0:
             if args.preprocessing["text_process"] == "tf-idf":
                 vectorizer = TfidfVectorizer()
-                text_features = vectorizer.fit_transform(data[text_feature.columns].values.astype('U').flatten())
-                text_features_df = pd.DataFrame(text_features.toarray())
+                text_features = vectorizer.fit_transform(data[text_feature.columns])
+                text_features_df = pd.DataFrame(text_features.toarray(), columns=vectorizer.get_feature_names_out())
                 data = pd.concat([data, text_features_df], axis=1)
                 print("Texto tratado con éxito usando TF-IDF")
             elif args.preprocessing["text_process"] == "bow":
                 vectorizer = CountVectorizer()
-                text_features = vectorizer.fit_transform(data[text_feature.columns].values.astype('U').flatten())
+                text_features = vectorizer.fit_transform(data[text_feature.columns])
                 text_features_df = pd.DataFrame(text_features.toarray())
                 data = pd.concat([data, text_features_df], axis=1)
                 print("Texto tratado con éxito usando BOW")
@@ -320,40 +309,33 @@ def process_text(text_feature):
 
 def over_under_sampling():
     """
-    Realiza oversampling o undersampling en el conjunto de datos dado en función del método de preprocesamiento especificado.
-
+    Realiza oversampling o undersampling en los datos según la estrategia especificada en args.preprocessing["sampling"].
+    
     Args:
-        data (pandas.DataFrame): El conjunto de datos de entrada.
-        args (dict): Un diccionario que contiene los parámetros de preprocesamiento.
-
+        None
+    
     Returns:
-        pandas.DataFrame: El conjunto de datos remuestreado.
-
+        None
+    
     Raises:
-        Exception: Si ocurre un error durante el oversampling o undersampling.
-
+        Exception: Si ocurre algún error al realizar el oversampling o undersampling.
     """
+    
     global data
     try:
         if args.preprocessing["sampling"] == "oversampling":
-            ros = RandomOverSampler(sampling_strategy='minority')
+            ros = RandomOverSampler(sampling_strategy='minority', random_state=42)
             x = data.drop(columns=[args.prediction])
             y = data[args.prediction]
-            # Convertir la variable objetivo a categórica
-            #label_encoder = LabelEncoder()
-            #y = label_encoder.fit_transform(y)
             x, y = ros.fit_resample(x, y)
             x = pd.DataFrame(x, columns=data.drop(columns=[args.prediction]).columns)
             y = pd.Series(y, name=args.prediction)
             data = pd.concat([x, y], axis=1)
             print("Oversampling realizado con éxito")
         elif args.preprocessing["sampling"] == "undersampling":
-            rus = RandomUnderSampler(sampling_strategy='majority')
+            rus = RandomUnderSampler(sampling_strategy='majority', random_state=42)
             x = data.drop(columns=[args.prediction])
             y = data[args.prediction]
-            # Convertir la variable objetivo a categórica
-            #label_encoder = LabelEncoder()
-            #y = label_encoder.fit_transform(y)
             x, y = rus.fit_resample(x, y)
             x = pd.DataFrame(x, columns=data.drop(columns=[args.prediction]).columns)
             y = pd.Series(y, name=args.prediction)
@@ -380,12 +362,12 @@ def preprocesar_datos():
     """
     Función para preprocesar los datos
         1. Separamos los datos por tipos (Categoriales, numéricos y textos)
-        2. Pasar los datos a categoriales a numéricos 
+        2. Pasar los datos de categoriales a numéricos 
         TODO 3. Tratamos missing values (Eliminar y imputar)
         4. Reescalamos los datos datos (MinMax, Normalizer, MaxAbsScaler)
         5. Simplificamos el texto (Normalizar, eliminar stopwords, stemming y ordenar alfabéticamente)
         TODO 6. Tratamos el texto (TF-IDF, BOW)
-        TODO 7. Realizamos Oversampling o Undersampling
+        7. Realizamos Oversampling o Undersampling
         TODO 8. Borrar columnas no necesarias
     :param data: Datos a preprocesar
     :return: Datos preprocesados y divididos en train y test
@@ -393,10 +375,13 @@ def preprocesar_datos():
     # Separamos los datos por tipos
     numerical_feature, text_feature, categorical_feature = select_features()
 
-    # Pasar los datos a categoriales a numéricos
-    cat2num(categorical_feature)
-
     if args.algorithm == "kNN":
+        # Simplificamos el texto
+        simplify_text(text_feature)
+
+        # Pasar los datos a categoriales a numéricos
+        cat2num(categorical_feature)
+
         # Tratamos missing values
         process_missing_values()
 
@@ -408,6 +393,9 @@ def preprocesar_datos():
     elif args.algorithm == "decision_tree" or args.algorithm == "random_forest":
         # Simplificamos el texto
         simplify_text(text_feature)
+
+        # Pasar los datos a categoriales a numéricos
+        cat2num(categorical_feature)
 
         # Tratamos el texto
         process_text(text_feature)
@@ -445,7 +433,7 @@ def divide_data():
     x = data.drop(columns=[args.prediction])
     
     # Dividimos los datos en entrenamiento y dev
-    x_train, x_dev, y_train, y_dev = train_test_split(x, y, test_size=0.25, random_state=0)
+    x_train, x_dev, y_train, y_dev = train_test_split(x, y, test_size=0.25, random_state=42)
     return x_train, x_dev, y_train, y_dev
 
 def save_model(gs):
@@ -605,7 +593,7 @@ def load_model():
         sys.exit(1)
         
 def predict():
-    pass
+    print(model.predict(data))
 
 # Función principal
 

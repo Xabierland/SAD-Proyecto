@@ -48,8 +48,8 @@ def parse_args():
     Función para parsear los argumentos de entrada
     """
     parse = argparse.ArgumentParser(description="Practica de algoritmos de clasificación de datos.")
-    parse.add_argument("-m", "--mode", help="Modo de ejecución (train* o test)", required=False, default="train")
-    parse.add_argument("-f", "--file", help="Fichero csv (Path)", required=True)
+    parse.add_argument("-m", "--mode", help="Modo de ejecución (train o test)", required=True)
+    parse.add_argument("-f", "--file", help="Fichero csv (/Path_to_file)", required=True)
     parse.add_argument("-a", "--algorithm", help="Algoritmo a ejecutar (kNN, decision_tree o random_forest)", required=True)
     parse.add_argument("-p", "--prediction", help="Columna a predecir (Nombre de la columna)", required=True)
     parse.add_argument("-v", "--verbose", help="Mostrar información adicional", required=False, default=False, action="store_true")
@@ -322,31 +322,34 @@ def over_under_sampling():
     """
     
     global data
-    try:
-        if args.preprocessing["sampling"] == "oversampling":
-            ros = RandomOverSampler(sampling_strategy='minority', random_state=42)
-            x = data.drop(columns=[args.prediction])
-            y = data[args.prediction]
-            x, y = ros.fit_resample(x, y)
-            x = pd.DataFrame(x, columns=data.drop(columns=[args.prediction]).columns)
-            y = pd.Series(y, name=args.prediction)
-            data = pd.concat([x, y], axis=1)
-            print("Oversampling realizado con éxito")
-        elif args.preprocessing["sampling"] == "undersampling":
-            rus = RandomUnderSampler(sampling_strategy='majority', random_state=42)
-            x = data.drop(columns=[args.prediction])
-            y = data[args.prediction]
-            x, y = rus.fit_resample(x, y)
-            x = pd.DataFrame(x, columns=data.drop(columns=[args.prediction]).columns)
-            y = pd.Series(y, name=args.prediction)
-            data = pd.concat([x, y], axis=1)
-            print("Undersampling realizado con éxito")
-        else:
-            print("No se están realizando oversampling o undersampling")
-    except Exception as e:
-        print("Error al realizar oversampling o undersampling")
-        print(e)
-        sys.exit(1)
+    if args.mode != "test":
+        try:
+            if args.preprocessing["sampling"] == "oversampling":
+                ros = RandomOverSampler(sampling_strategy='minority', random_state=42)
+                x = data.drop(columns=[args.prediction])
+                y = data[args.prediction]
+                x, y = ros.fit_resample(x, y)
+                x = pd.DataFrame(x, columns=data.drop(columns=[args.prediction]).columns)
+                y = pd.Series(y, name=args.prediction)
+                data = pd.concat([x, y], axis=1)
+                print("Oversampling realizado con éxito")
+            elif args.preprocessing["sampling"] == "undersampling":
+                rus = RandomUnderSampler(sampling_strategy='majority', random_state=42)
+                x = data.drop(columns=[args.prediction])
+                y = data[args.prediction]
+                x, y = rus.fit_resample(x, y)
+                x = pd.DataFrame(x, columns=data.drop(columns=[args.prediction]).columns)
+                y = pd.Series(y, name=args.prediction)
+                data = pd.concat([x, y], axis=1)
+                print("Undersampling realizado con éxito")
+            else:
+                print("No se están realizando oversampling o undersampling")
+        except Exception as e:
+            print("Error al realizar oversampling o undersampling")
+            print(e)
+            sys.exit(1)
+    else:
+        print("No se realiza oversampling o undersampling en modo test")
 
 def drop_features(features):
     global data
@@ -405,10 +408,6 @@ def preprocesar_datos():
     else:
         print("Algoritmo no soportado")
         sys.exit(1)
-    
-    # ! Just for testing
-    if args.debug:
-        data.to_csv('datos/data.csv', index=False)
 
     return data
 
@@ -448,10 +447,10 @@ def save_model(gs):
 
     """
     try:
-        with open('model.pkl', 'wb') as file:
+        with open('output/'+args.algorithm+'.pkl', 'wb') as file:
             pickle.dump(gs, file)
             print("Modelo guardado con éxito")
-        with open('model.csv', 'w') as file:
+        with open('output/'+args.algorithm+'.csv', 'w') as file:
             writer = csv.writer(file)
             writer.writerow(['Params', 'Score'])
             for params, score in zip(gs.cv_results_['params'], gs.cv_results_['mean_test_score']):
@@ -569,21 +568,8 @@ def random_forest():
 # Funciones para predecir con un modelo
 
 def load_model():
-    """
-    Función para cargar un modelo desde un archivo.
-
-    Parámetros:
-    - file: str, la ruta al archivo que contiene el modelo.
-
-    Retorna:
-    - model: el modelo cargado desde el archivo.
-
-    Lanza:
-    - Exception: Si ocurre un error al cargar el modelo.
-
-    """
     try:
-        with open(file, 'rb') as file:
+        with open('output/'+args.algorithm+'.pkl', 'rb') as file:
             model = pickle.load(file)
             print("Modelo cargado con éxito")
             return model
@@ -593,7 +579,16 @@ def load_model():
         sys.exit(1)
         
 def predict():
-    print(model.predict(data))
+    global data
+    # Predecimos
+    prediction = model.predict(data)
+    
+    # Añadimos la prediccion al dataframe data
+    data = pd.concat([data, pd.DataFrame(prediction, columns=[args.prediction])], axis=1)
+    
+    # Guardamos el dataframe con la prediccion
+    data.to_csv('output/data-prediction.csv', index=False)
+    print("Predicción guardada con éxito")
 
 # Función principal
 
@@ -615,6 +610,7 @@ if __name__ == "__main__":
         # Preprocesamos los datos
         print("\n- Preprocesando datos...")
         preprocesar_datos()
+        data.to_csv('output/data-processed.csv', index=False)
         # Ejecutamos el algoritmo seleccionado
         print("\n- Ejecutando algoritmo...")
         if args.algorithm == "kNN":
@@ -643,12 +639,19 @@ if __name__ == "__main__":
             sys.exit(1)
     elif args.mode == "test":
         # Cargamos los datos
+        print("\n- Cargando datos...")
         data = load_data(args.file)
         
+        # Preprocesamos los datos
+        print("\n- Preprocesando datos...")
+        preprocesar_datos()
+        
         # Cargamos el modelo
-        model = load_model(args.model)
+        print("\n- Cargando modelo...")
+        model = load_model()
         
         # Predecimos
+        print("\n- Prediciendo...")
         predict()
     else:
         print("Modo no soportado")

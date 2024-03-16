@@ -352,6 +352,13 @@ def over_under_sampling():
         print("No se realiza oversampling o undersampling en modo test")
 
 def drop_features(features):
+    """
+    Elimina las columnas especificadas del conjunto de datos.
+
+    Parámetros:
+    features (list): Lista de nombres de columnas a eliminar.
+
+    """
     global data
     try:
         data = data.drop(columns=features)
@@ -440,17 +447,17 @@ def save_model(gs):
     Guarda el modelo y los resultados de la búsqueda de hiperparámetros en archivos.
 
     Parámetros:
-    - gs: objeto GridSearchCV, el cual contiene el modelo entrenado y los resultados de la búsqueda de hiperparámetros.
+    - gs: objeto GridSearchCV, el cual contiene el modelo y los resultados de la búsqueda de hiperparámetros.
 
     Excepciones:
     - Exception: Si ocurre algún error al guardar el modelo.
 
     """
     try:
-        with open('output/'+args.algorithm+'.pkl', 'wb') as file:
+        with open('output/modelo.pkl', 'wb') as file:
             pickle.dump(gs, file)
             print("Modelo guardado con éxito")
-        with open('output/'+args.algorithm+'.csv', 'w') as file:
+        with open('output/modelo.csv', 'w') as file:
             writer = csv.writer(file)
             writer.writerow(['Params', 'Score'])
             for params, score in zip(gs.cv_results_['params'], gs.cv_results_['mean_test_score']):
@@ -539,15 +546,17 @@ def decision_tree():
     
 def random_forest():
     """
-    Función para implementar el algoritmo de random forest.
+    Función que entrena un modelo de Random Forest utilizando GridSearchCV para encontrar los mejores hiperparámetros.
+    Divide los datos en entrenamiento y desarrollo, realiza la búsqueda de hiperparámetros, guarda el modelo entrenado
+    utilizando pickle y muestra los resultados utilizando los datos de desarrollo.
 
-    :param train: Conjunto de datos de entrenamiento.
-    :type train: pandas.DataFrame
-    :param dev: Conjunto de datos de desarrollo.
-    :type dev: pandas.DataFrame
-    :return: Tupla con la clasificación de los datos.
-    :rtype: tuple
+    Parámetros:
+        Ninguno
+
+    Retorna:
+        Ninguno
     """
+    
     # Dividimos los datos en entrenamiento y dev
     x_train, x_dev, y_train, y_dev = divide_data()
     
@@ -568,8 +577,17 @@ def random_forest():
 # Funciones para predecir con un modelo
 
 def load_model():
+    """
+    Carga el modelo desde el archivo 'output/modelo.pkl' y lo devuelve.
+
+    Returns:
+        model: El modelo cargado desde el archivo 'output/modelo.pkl'.
+
+    Raises:
+        Exception: Si ocurre un error al cargar el modelo.
+    """
     try:
-        with open('output/'+args.algorithm+'.pkl', 'rb') as file:
+        with open('output/modelo.pkl', 'rb') as file:
             model = pickle.load(file)
             print("Modelo cargado con éxito")
             return model
@@ -579,6 +597,15 @@ def load_model():
         sys.exit(1)
         
 def predict():
+    """
+    Realiza una predicción utilizando el modelo entrenado y guarda los resultados en un archivo CSV.
+
+    Parámetros:
+        Ninguno
+
+    Retorna:
+        Ninguno
+    """
     global data
     # Predecimos
     prediction = model.predict(data)

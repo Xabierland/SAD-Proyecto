@@ -5,7 +5,7 @@
         "impute_strategy": "mean",
         "scaling": "normalizer",
         "text_process": "tf-idf",
-        "sampling": "oversampling"
+        "sampling": "undersampling"
     },
     "kNN": {
         "n_neighbors": [3, 4, 5, 6, 7, 8, 9, 10, 11],

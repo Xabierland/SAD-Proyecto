@@ -13,6 +13,7 @@ import pickle
 import time
 import json
 import csv
+import os
 # Sklearn
 from sklearn.calibration import LabelEncoder
 from sklearn.metrics import f1_score, confusion_matrix, classification_report
@@ -507,7 +508,7 @@ def kNN():
     x_train, x_dev, y_train, y_dev = divide_data()
     
     # Hacemos un barrido de hiperparametros
-    gs = GridSearchCV(KNeighborsClassifier(), args.kNN, cv=5, n_jobs=-1, )
+    gs = GridSearchCV(KNeighborsClassifier(), args.kNN, cv=5, n_jobs=args.cpu, )
     start_time = time.time()
     gs.fit(x_train, y_train)
     end_time = time.time()
@@ -533,7 +534,7 @@ def decision_tree():
     x_train, x_dev, y_train, y_dev = divide_data()
     
     # Hacemos un barrido de hiperparametros
-    gs = GridSearchCV(DecisionTreeClassifier(), args.decision_tree, cv=5, n_jobs=-1,)
+    gs = GridSearchCV(DecisionTreeClassifier(), args.decision_tree, cv=5, n_jobs=args.cpu,)
     start_time = time.time()
     gs.fit(x_train, y_train)
     end_time = time.time()
@@ -563,7 +564,7 @@ def random_forest():
     x_train, x_dev, y_train, y_dev = divide_data()
     
     # Hacemos un barrido de hiperparametros
-    gs = GridSearchCV(RandomForestClassifier(), args.random_forest, cv=5, n_jobs=-1,)
+    gs = GridSearchCV(RandomForestClassifier(), args.random_forest, cv=5, n_jobs=args.cpu,)
     start_time = time.time()
     gs.fit(x_train, y_train)
     end_time = time.time()
@@ -625,6 +626,12 @@ if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal_handler)
     # Parseamos los argumentos
     args = parse_args()
+    # Si la carpeta output no existe la creamos
+    try:
+        os.makedirs('output')
+        print("Carpeta output creada con éxito")
+    except:
+        pass
     # Cargamos los datos
     print("\n- Cargando datos...")
     data = load_data(args.file)

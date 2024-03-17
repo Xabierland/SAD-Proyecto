@@ -637,9 +637,13 @@ if __name__ == "__main__":
     # Preprocesamos los datos
     print("\n- Preprocesando datos...")
     preprocesar_datos()
-    print("\n- Guardando datos preprocesados...")
-    data.to_csv('output/data-processed.csv', index=False)
-    print("Datos preprocesados guardados con éxito")
+    if args.debug:
+        try:
+            print("\n- Guardando datos preprocesados...")
+            data.to_csv('output/data-processed.csv', index=False)
+            print("Datos preprocesados guardados con éxito")
+        except Exception as e:
+            print("Error al guardar los datos preprocesados")
     if args.mode == "train":
         # Ejecutamos el algoritmo seleccionado
         print("\n- Ejecutando algoritmo...")

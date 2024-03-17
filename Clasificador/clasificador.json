@@ -5,8 +5,8 @@
         "missing_values": "impute",
         "impute_strategy": "mean",
         "scaling": "normalizer",
-        "text_process": "tf-idf",
-        "sampling": "undersampling"
+        "text_process": null,
+        "sampling": null
     },
     "kNN": {
         "n_neighbors": [3, 5, 7],
@@ -31,5 +31,6 @@
         "min_samples_leaf": [1, 2, 4],
         "max_features": ["sqrt", "log2"],
         "bootstrap": [true, false]
-    }
+    },
+    "cpu": -1
 }

@@ -287,11 +287,30 @@ def process_text(text_feature):
     try:
         if text_feature.columns.size > 0:
             if args.preprocessing["text_process"] == "tf-idf":
+               
+               from sklearn.feature_extraction.text import TfidfVectorizer
+               print(text_feature.columns)
+               tfidf_vectorizer = TfidfVectorizer()
+               text_data = data[text_feature.columns].apply(lambda x: ' '.join(x.astype(str)), axis=1)
+               tfidf_matrix = tfidf_vectorizer.fit_transform(text_data)
+               text_features_df = pd.DataFrame(tfidf_matrix.toarray(), columns=tfidf_vectorizer.get_feature_names_out())
+               data = pd.concat([data, text_features_df], axis=1)
+               data.drop(text_feature.columns, axis=1, inplace=True)
+                    #La matriz pequeña visualizacion
+               print("Matriz TF-IDF uwu:")
+               print(tfidf_matrix.toarray())
+
+                    # Nombres
+               print("\nPalabras:")
+               print(tfidf_vectorizer.get_feature_names_out())
+
+               """
                 vectorizer = TfidfVectorizer()
                 text_features = vectorizer.fit_transform(data[text_feature.columns])
+                print(text_feature)
                 text_features_df = pd.DataFrame(text_features.toarray(), columns=vectorizer.get_feature_names_out())
                 data = pd.concat([data, text_features_df], axis=1)
-                print("Texto tratado con éxito usando TF-IDF")
+                print("Texto tratado con éxito usando TF-IDF") """
             elif args.preprocessing["text_process"] == "bow":
                 vectorizer = CountVectorizer()
                 text_features = vectorizer.fit_transform(data[text_feature.columns])

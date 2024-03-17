@@ -251,11 +251,10 @@ def cat2num(categorical_feature):
 
 def simplify_text(text_feature):
     """
-    Simplifica el texto en el DataFrame 'data' utilizando técnicas de procesamiento de lenguaje natural.
+    Función que simplifica el texto de una columna dada en un DataFrame.
     
     Parámetros:
-    - data: DataFrame que contiene los datos a procesar.
-    - text_data: DataFrame que contiene las columnas de texto a simplificar.
+    - text_feature: DataFrame - El DataFrame que contiene la columna de texto a simplificar.
     
     Retorna:
     None
@@ -354,7 +353,7 @@ def over_under_sampling():
     else:
         print("No se realiza oversampling o undersampling en modo test")
 
-def drop_features(features):
+def drop_features():
     """
     Elimina las columnas especificadas del conjunto de datos.
 
@@ -364,7 +363,7 @@ def drop_features(features):
     """
     global data
     try:
-        data = data.drop(columns=features)
+        data = data.drop(columns=args.preprocessing["drop_features"])
         print("Columnas eliminadas con éxito")
     except Exception as e:
         print("Error al eliminar columnas")
@@ -378,8 +377,8 @@ def preprocesar_datos():
         2. Pasar los datos de categoriales a numéricos 
         TODO 3. Tratamos missing values (Eliminar y imputar)
         4. Reescalamos los datos datos (MinMax, Normalizer, MaxAbsScaler)
-        5. Simplificamos el texto (Normalizar, eliminar stopwords, stemming y ordenar alfabéticamente)
-        TODO 6. Tratamos el texto (TF-IDF, BOW)
+        TODO 5. Simplificamos el texto (Normalizar, eliminar stopwords, stemming y ordenar alfabéticamente)
+        6. Tratamos el texto (TF-IDF, BOW)
         7. Realizamos Oversampling o Undersampling
         TODO 8. Borrar columnas no necesarias
     :param data: Datos a preprocesar

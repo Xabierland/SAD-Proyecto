@@ -286,35 +286,19 @@ def process_text(text_feature):
     global data
     try:
         if text_feature.columns.size > 0:
-            if args.preprocessing["text_process"] == "tf-idf":
-               
-               from sklearn.feature_extraction.text import TfidfVectorizer
-               print(text_feature.columns)
+            if args.preprocessing["text_process"] == "tf-idf":               
                tfidf_vectorizer = TfidfVectorizer()
                text_data = data[text_feature.columns].apply(lambda x: ' '.join(x.astype(str)), axis=1)
                tfidf_matrix = tfidf_vectorizer.fit_transform(text_data)
                text_features_df = pd.DataFrame(tfidf_matrix.toarray(), columns=tfidf_vectorizer.get_feature_names_out())
                data = pd.concat([data, text_features_df], axis=1)
                data.drop(text_feature.columns, axis=1, inplace=True)
-                    #La matriz pequeña visualizacion
-               print("Matriz TF-IDF uwu:")
-               print(tfidf_matrix.toarray())
-
-                    # Nombres
-               print("\nPalabras:")
-               print(tfidf_vectorizer.get_feature_names_out())
-
-               """
-                vectorizer = TfidfVectorizer()
-                text_features = vectorizer.fit_transform(data[text_feature.columns])
-                print(text_feature)
-                text_features_df = pd.DataFrame(text_features.toarray(), columns=vectorizer.get_feature_names_out())
-                data = pd.concat([data, text_features_df], axis=1)
-                print("Texto tratado con éxito usando TF-IDF") """
+               print("Texto tratado con éxito usando TF-IDF")
             elif args.preprocessing["text_process"] == "bow":
-                vectorizer = CountVectorizer()
-                text_features = vectorizer.fit_transform(data[text_feature.columns])
-                text_features_df = pd.DataFrame(text_features.toarray())
+                bow_vecotirizer = CountVectorizer()
+                text_data = data[text_feature.columns].apply(lambda x: ' '.join(x.astype(str)), axis=1)
+                bow_matrix = bow_vecotirizer.fit_transform(text_data)
+                text_features_df = pd.DataFrame(bow_matrix.toarray(), columns=bow_vecotirizer.get_feature_names_out())
                 data = pd.concat([data, text_features_df], axis=1)
                 print("Texto tratado con éxito usando BOW")
             else:
@@ -632,8 +616,6 @@ def predict():
     # Añadimos la prediccion al dataframe data
     data = pd.concat([data, pd.DataFrame(prediction, columns=[args.prediction])], axis=1)
     
-    # Guardamos el dataframe con la prediccion
-    data.to_csv('output/data-prediction.csv', index=False)
     print("Predicción guardada con éxito")
 
 # Función principal
@@ -644,19 +626,21 @@ if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal_handler)
     # Parseamos los argumentos
     args = parse_args()
+    # Cargamos los datos
+    print("\n- Cargando datos...")
+    data = load_data(args.file)
+    # Descargamos los recursos necesarios de nltk
+    print("\n- Descargando diccionarios...")
+    nltk.download('stopwords')
+    nltk.download('punkt')
+    nltk.download('wordnet')
+    # Preprocesamos los datos
+    print("\n- Preprocesando datos...")
+    preprocesar_datos()
+    print("\n- Guardando datos preprocesados...")
+    data.to_csv('output/data-processed.csv', index=False)
+    print("Datos preprocesados guardados con éxito")
     if args.mode == "train":
-        # Cargamos los datos
-        print("\n- Cargando datos...")
-        data = load_data(args.file)
-        # Descargamos los recursos necesarios de nltk
-        print("\n- Descargando diccionarios...")
-        nltk.download('stopwords')
-        nltk.download('punkt')
-        nltk.download('wordnet')
-        # Preprocesamos los datos
-        print("\n- Preprocesando datos...")
-        preprocesar_datos()
-        data.to_csv('output/data-processed.csv', index=False)
         # Ejecutamos el algoritmo seleccionado
         print("\n- Ejecutando algoritmo...")
         if args.algorithm == "kNN":
@@ -684,21 +668,21 @@ if __name__ == "__main__":
             print("Algoritmo no soportado")
             sys.exit(1)
     elif args.mode == "test":
-        # Cargamos los datos
-        print("\n- Cargando datos...")
-        data = load_data(args.file)
-        
-        # Preprocesamos los datos
-        print("\n- Preprocesando datos...")
-        preprocesar_datos()
-        
         # Cargamos el modelo
         print("\n- Cargando modelo...")
         model = load_model()
-        
         # Predecimos
         print("\n- Prediciendo...")
-        predict()
+        try:
+            predict()
+            print("Predicción realizada con éxito")
+            # Guardamos el dataframe con la prediccion
+            data.to_csv('output/data-prediction.csv', index=False)
+            print("Predicción guardada con éxito")
+            sys.exit(0)
+        except Exception as e:
+            print(e)
+            sys.exit(1)
     else:
         print("Modo no soportado")
         sys.exit(1)

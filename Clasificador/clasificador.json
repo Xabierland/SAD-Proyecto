@@ -6,7 +6,7 @@
         "impute_strategy": "mean",
         "scaling": "normalizer",
         "text_process": null,
-        "sampling": null
+        "sampling": "oversampling"
     },
     "kNN": {
         "n_neighbors": [3, 5, 7],

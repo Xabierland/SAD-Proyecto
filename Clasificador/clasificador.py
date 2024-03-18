@@ -4,9 +4,11 @@ Autor: Xabier Gabiña y Ibai Sologestoa.
 Script para la implementación del algoritmo de clasificación
 """
 
+import random
 import sys
 import signal
 import argparse
+from colorama import Fore
 import pandas as pd
 import string
 import pickle
@@ -32,7 +34,7 @@ from nltk.tokenize import word_tokenize
 # Imblearn
 from imblearn.under_sampling import RandomUnderSampler
 from imblearn.over_sampling import RandomOverSampler
-
+from tqdm import tqdm
 # Funciones auxiliares
 
 def signal_handler(sig, frame):
@@ -48,14 +50,13 @@ def parse_args():
     """
     Función para parsear los argumentos de entrada
     """
-    parse = argparse.ArgumentParser(description="Practica de algoritmos de clasificación de datos.")
-    parse.add_argument("-m", "--mode", help="Modo de ejecución (train o test)", required=True)
-    parse.add_argument("-f", "--file", help="Fichero csv (/Path_to_file)", required=True)
-    parse.add_argument("-a", "--algorithm", help="Algoritmo a ejecutar (kNN, decision_tree o random_forest)", required=True)
-    parse.add_argument("-p", "--prediction", help="Columna a predecir (Nombre de la columna)", required=True)
-    parse.add_argument("-v", "--verbose", help="Mostrar información adicional", required=False, default=False, action="store_true")
-    parse.add_argument("--debug", help="Modo debug", required=False, default=False, action="store_true")
-    
+    parse = argparse.ArgumentParser(description=Fore.MAGENTA+"Practica de algoritmos de clasificación de datos."+Fore.RESET)
+    parse.add_argument("-m", "--mode", help=Fore.YELLOW+"Modo de ejecución (train o test)"+Fore.RESET, required=True)
+    parse.add_argument("-f", "--file", help=Fore.YELLOW+"Fichero csv (/Path_to_file)"+Fore.RESET, required=True)
+    parse.add_argument("-a", "--algorithm", help=Fore.YELLOW+"Algoritmo a ejecutar (kNN, decision_tree o random_forest)"+Fore.RESET, required=True)
+    parse.add_argument("-p", "--prediction", help=Fore.YELLOW+"Columna a predecir (Nombre de la columna)"+Fore.RESET, required=True)
+    parse.add_argument("-v", "--verbose", help=Fore.YELLOW+"Mostrar información adicional"+Fore.RESET, required=False, default=False, action="store_true")
+    parse.add_argument("--debug", help=Fore.YELLOW+"Modo debug"+Fore.RESET, required=False, default=False, action="store_true")
     # Parseamos los argumentos
     args = parse.parse_args()
     
@@ -78,10 +79,10 @@ def load_data(file):
     """
     try:
         data = pd.read_csv(file, encoding='utf-8')
-        print("Datos cargados con éxito")
+        print(Fore.GREEN+"Datos cargados con éxito"+Fore.RESET)
         return data
     except Exception as e:
-        print("Error al cargar los datos")
+        print(Fore.RED+"Error al cargar los datos"+Fore.RESET)
         print(e)
         sys.exit(1)
 
@@ -141,15 +142,15 @@ def select_features():
         # Text features
         text_feature = data.select_dtypes(include='object').drop(columns=categorical_feature.columns)
 
-        print("Datos separados con éxito")
+        print(Fore.GREEN+"Datos separados con éxito"+Fore.RESET)
         
         if args.debug:
-            print("> Columnas numéricas:\n", numerical_feature.columns)
-            print("> Columnas de texto:\n", text_feature.columns)
-            print("> Columnas categóricas:\n", categorical_feature.columns)
+            print(Fore.MAGENTA+"> Columnas numéricas:\n", numerical_feature.columns+Fore.RESET)
+            print(Fore.MAGENTA+"> Columnas de texto:\n", text_feature.columns+Fore.RESET)
+            print(Fore.MAGENTA+"> Columnas categóricas:\n", categorical_feature.columns+Fore.RESET)
         return numerical_feature, text_feature, categorical_feature
     except Exception as e:
-        print("Error al separar los datos")
+        print(Fore.RED+"Error al separar los datos"+Fore.RESET)
         print(e)
         sys.exit(1)
 
@@ -170,23 +171,23 @@ def process_missing_values():
     try:
         if args.preprocessing["missing_values"] == "drop":
             data = data.dropna()
-            print("Missing values eliminados con éxito")
+            print(Fore.GREEN+"Missing values eliminados con éxito"+Fore.RESET)
         elif args.preprocessing["missing_values"] == "impute":
             if args.preprocessing["impute_strategy"] == "mean":
-                data = data.fillna(data.mean())
-                print("Missing values imputados con éxito usando la media")
+             data = data.fillna(data.mean())
+             print(Fore.GREEN+"Missing values imputados con éxito usando la media"+Fore.RESET)
             elif args.preprocessing["impute_strategy"] == "median":
-                data = data.fillna(data.median())
-                print("Missing values imputados con éxito usando la mediana")
+             data = data.fillna(data.median())
+             print(Fore.GREEN+"Missing values imputados con éxito usando la mediana"+Fore.RESET)
             elif args.preprocessing["impute_strategy"] == "most_frequent":
-                data = data.fillna(data.mode().iloc[0])
-                print("Missing values imputados con éxito usando la moda")
+             data = data.fillna(data.mode().iloc[0])
+             print(Fore.GREEN+"Missing values imputados con éxito usando la moda"+Fore.RESET)
             else:
-                print("No se ha seleccionado ninguna estrategia de imputación")
+             print(Fore.GREEN+"No se ha seleccionado ninguna estrategia de imputación"+Fore.RESET)
         else:
-            print("No se están tratando los missing values")
+            print(Fore.YELLOW+"No se están tratando los missing values"+Fore.RESET)
     except Exception as e:
-        print("Error al tratar los missing values")
+        print(Fore.RED+"Error al tratar los missing values"+Fore.RESET)
         print(e)
         sys.exit(1)
 
@@ -210,21 +211,21 @@ def reescaler(numerical_feature):
             if args.preprocessing["scaling"] == "minmax":
                 scaler = MinMaxScaler()
                 data[numerical_feature.columns] = scaler.fit_transform(data[numerical_feature.columns])
-                print("Datos reescalados con éxito usando MinMaxScaler")
+                print(Fore.GREEN+"Datos reescalados con éxito usando MinMaxScaler"+Fore.RESET)
             elif args.preprocessing["scaling"] == "normalizer":
                 scaler = Normalizer()
                 data[numerical_feature.columns] = scaler.fit_transform(data[numerical_feature.columns])
-                print("Datos reescalados con éxito usando Normalizer")
+                print(Fore.GREEN+"Datos reescalados con éxito usando Normalizer"+Fore.RESET)
             elif args.preprocessing["scaling"] == "maxabs":
                 scaler = MaxAbsScaler()
                 data[numerical_feature.columns] = scaler.fit_transform(data[numerical_feature.columns])
-                print("Datos reescalados con éxito usando MaxAbsScaler")
+                print(Fore.GREEN+"Datos reescalados con éxito usando MaxAbsScaler"+Fore.RESET)
             else:
                 print("No se están escalando los datos")
         else:
-            print("No se han encontrado columnas numéricas")
+            print(Fore.YELLOW+"No se han encontrado columnas numéricas"+Fore.RESET)
     except Exception as e:
-        print("Error al reescalar los datos")
+        print(Fore.RED+"Error al reescalar los datos"+Fore.RESET)
         print(e)
         sys.exit(1)
 
@@ -242,11 +243,11 @@ def cat2num(categorical_feature):
             labelencoder = LabelEncoder()
             for col in categorical_feature.columns:
                 data[col] = labelencoder.fit_transform(data[col])
-            print("Datos categóricos pasados a numéricos con éxito")
+            print(Fore.GREEN+"Datos categóricos pasados a numéricos con éxito"+Fore.RESET)
         else:
-            print("No se han encontrado columnas categóricas")
+            print(+Fore.YELLOW+"No se han encontrado columnas categóricas"+Fore.RESET)
     except Exception as e:
-        print("Error al pasar los datos categóricos a numéricos")
+        print(Fore.RED+"Error al pasar los datos categóricos a numéricos"+Fore.RESET)
         print(e)
         sys.exit(1)
 
@@ -267,11 +268,11 @@ def simplify_text(text_feature):
             stemmer = PorterStemmer()
             for col in text_feature.columns:
                 data[col] = data[col].apply(lambda x: ' '.join(sorted([stemmer.stem(word) for word in word_tokenize(x.lower()) if word not in stop_words and word not in string.punctuation])))
-            print("Texto simplificado con éxito")
+            print(Fore.GREEN+"Texto simplificado con éxito"+Fore.RESET)
         else:
-            print("No se han encontrado columnas de texto a simplificar")
+            print(Fore.YELLOW+"No se han encontrado columnas de texto a simplificar"+Fore.RESET)
     except Exception as e:
-        print("Error al simplificar el texto")
+        print(Fore.RED+"Error al simplificar el texto"+Fore.RESET)
         print(e)
         sys.exit(1)
 
@@ -293,20 +294,20 @@ def process_text(text_feature):
                text_features_df = pd.DataFrame(tfidf_matrix.toarray(), columns=tfidf_vectorizer.get_feature_names_out())
                data = pd.concat([data, text_features_df], axis=1)
                data.drop(text_feature.columns, axis=1, inplace=True)
-               print("Texto tratado con éxito usando TF-IDF")
+               print(Fore.GREEN+"Texto tratado con éxito usando TF-IDF"+Fore.RESET)
             elif args.preprocessing["text_process"] == "bow":
                 bow_vecotirizer = CountVectorizer()
                 text_data = data[text_feature.columns].apply(lambda x: ' '.join(x.astype(str)), axis=1)
                 bow_matrix = bow_vecotirizer.fit_transform(text_data)
                 text_features_df = pd.DataFrame(bow_matrix.toarray(), columns=bow_vecotirizer.get_feature_names_out())
                 data = pd.concat([data, text_features_df], axis=1)
-                print("Texto tratado con éxito usando BOW")
+                print(Fore.GREEN+"Texto tratado con éxito usando BOW"+Fore.RESET)
             else:
-                print("No se están tratando los textos")
+                print(Fore.YELLOW+"No se están tratando los textos"+Fore.RESET)
         else:
-            print("No se han encontrado columnas de texto a procesar")
+            print(Fore.YELLOW+"No se han encontrado columnas de texto a procesar"+Fore.RESET)
     except Exception as e:
-        print("Error al tratar el texto")
+        print(Fore.RED+"Error al tratar el texto"+Fore.RESET)
         print(e)
         sys.exit(1)
 
@@ -335,7 +336,7 @@ def over_under_sampling():
                 x = pd.DataFrame(x, columns=data.drop(columns=[args.prediction]).columns)
                 y = pd.Series(y, name=args.prediction)
                 data = pd.concat([x, y], axis=1)
-                print("Oversampling realizado con éxito")
+                print(Fore.GREEN+"Oversampling realizado con éxito"+Fore.RESET)
             elif args.preprocessing["sampling"] == "undersampling":
                 rus = RandomUnderSampler(sampling_strategy='majority', random_state=42)
                 x = data.drop(columns=[args.prediction])
@@ -344,15 +345,15 @@ def over_under_sampling():
                 x = pd.DataFrame(x, columns=data.drop(columns=[args.prediction]).columns)
                 y = pd.Series(y, name=args.prediction)
                 data = pd.concat([x, y], axis=1)
-                print("Undersampling realizado con éxito")
+                print(Fore.GREEN+"Undersampling realizado con éxito"+Fore.RESET)
             else:
-                print("No se están realizando oversampling o undersampling")
+                print(Fore.YELLOW+"No se están realizando oversampling o undersampling"+Fore.RESET)
         except Exception as e:
-            print("Error al realizar oversampling o undersampling")
+            print(Fore.RED+"Error al realizar oversampling o undersampling"+Fore.RESET)
             print(e)
             sys.exit(1)
     else:
-        print("No se realiza oversampling o undersampling en modo test")
+        print(Fore.YELLOW+"No se realiza oversampling o undersampling en modo test"+Fore.RESET)
 
 def drop_features():
     """
@@ -365,9 +366,9 @@ def drop_features():
     global data
     try:
         data = data.drop(columns=args.preprocessing["drop_features"])
-        print("Columnas eliminadas con éxito")
+        print(Fore.GREEN+"Columnas eliminadas con éxito"+Fore.RESET)
     except Exception as e:
-        print("Error al eliminar columnas")
+        print(Fore.RED+"Error al eliminar columnas"+Fore.RESET)
         print(e)
         sys.exit(1)
 
@@ -416,7 +417,7 @@ def preprocesar_datos():
         # Realizamos Oversampling o Undersampling
         over_under_sampling()
     else:
-        print("Algoritmo no soportado")
+        print(Fore.RED+"Algoritmo no soportado"+Fore.RESET)
         sys.exit(1)
 
     return data
@@ -459,14 +460,14 @@ def save_model(gs):
     try:
         with open('output/modelo.pkl', 'wb') as file:
             pickle.dump(gs, file)
-            print("Modelo guardado con éxito")
+            print(Fore.CYAN+"Modelo guardado con éxito"+Fore.RESET)
         with open('output/modelo.csv', 'w') as file:
             writer = csv.writer(file)
             writer.writerow(['Params', 'Score'])
             for params, score in zip(gs.cv_results_['params'], gs.cv_results_['mean_test_score']):
                 writer.writerow([params, score])
     except Exception as e:
-        print("Error al guardar el modelo")
+        print(Fore.RED+"Error al guardar el modelo"+Fore.RESET)
         print(e)
 
 def mostrar_resultados(gs, x_dev, y_dev):
@@ -508,13 +509,20 @@ def kNN():
     x_train, x_dev, y_train, y_dev = divide_data()
     
     # Hacemos un barrido de hiperparametros
-    gs = GridSearchCV(KNeighborsClassifier(), args.kNN, cv=5, n_jobs=args.cpu, )
-    start_time = time.time()
-    gs.fit(x_train, y_train)
-    end_time = time.time()
+
+    with tqdm(total=100, desc='Procesando kNN', unit='iter', leave=True) as pbar:
+        gs = GridSearchCV(KNeighborsClassifier(), args.kNN, cv=5, n_jobs=args.cpu, )
+        start_time = time.time()
+        gs.fit(x_train, y_train)
+        end_time = time.time()
+        for i in range(100):
+            time.sleep(random.uniform(0.06, 0.15))  # Esperamos un tiempo aleatorio
+            pbar.update(random.random()*2)  # Actualizamos la barra con un valor aleatorio
+        pbar.n = 100
+        pbar.last_print_n = 100
+        pbar.update(0)
     execution_time = end_time - start_time
-    print("Tiempo de ejecución:\n", execution_time, "segundos")
-    
+    print("Tiempo de ejecución:"+Fore.MAGENTA, execution_time,Fore.RESET+ "segundos")
     # Guardamos el modelo utilizando pickle
     save_model(gs)
     
@@ -534,12 +542,19 @@ def decision_tree():
     x_train, x_dev, y_train, y_dev = divide_data()
     
     # Hacemos un barrido de hiperparametros
-    gs = GridSearchCV(DecisionTreeClassifier(), args.decision_tree, cv=5, n_jobs=args.cpu,)
-    start_time = time.time()
-    gs.fit(x_train, y_train)
-    end_time = time.time()
+    with tqdm(total=100, desc='Procesando decision tree', unit='iter', leave=True) as pbar:
+        gs = GridSearchCV(DecisionTreeClassifier(), args.decision_tree, cv=5, n_jobs=args.cpu,)
+        start_time = time.time()
+        gs.fit(x_train, y_train)
+        end_time = time.time()
+        for i in range(100):
+            time.sleep(random.uniform(0.06, 0.15))  # Esperamos un tiempo aleatorio
+            pbar.update(random.random()*2)  # Actualizamos la barra con un valor aleatorio
+        pbar.n = 100
+        pbar.last_print_n = 100
+        pbar.update(0)
     execution_time = end_time - start_time
-    print("Tiempo de ejecución:\n", execution_time, "segundos")
+    print("Tiempo de ejecución:"+Fore.MAGENTA, execution_time,Fore.RESET+ "segundos")
     
     # Guardamos el modelo utilizando pickle
     save_model(gs)
@@ -564,12 +579,19 @@ def random_forest():
     x_train, x_dev, y_train, y_dev = divide_data()
     
     # Hacemos un barrido de hiperparametros
-    gs = GridSearchCV(RandomForestClassifier(), args.random_forest, cv=5, n_jobs=args.cpu,)
-    start_time = time.time()
-    gs.fit(x_train, y_train)
-    end_time = time.time()
+    with tqdm(total=100, desc='Procesando random forest', unit='iter', leave=True) as pbar:
+        gs = GridSearchCV(RandomForestClassifier(), args.random_forest, cv=5, n_jobs=args.cpu,)
+        start_time = time.time()
+        gs.fit(x_train, y_train)
+        end_time = time.time()
+        for i in range(100):
+            time.sleep(random.uniform(0.06, 0.15))  # Esperamos un tiempo aleatorio
+            pbar.update(random.random()*2)  # Actualizamos la barra con un valor aleatorio
+        pbar.n = 100
+        pbar.last_print_n = 100
+        pbar.update(0)
     execution_time = end_time - start_time
-    print("Tiempo de ejecución:\n", execution_time, "segundos")
+    print("Tiempo de ejecución:"+Fore.MAGENTA, execution_time,Fore.RESET+ "segundos")
     
     # Guardamos el modelo utilizando pickle
     save_model(gs)
@@ -592,10 +614,10 @@ def load_model():
     try:
         with open('output/modelo.pkl', 'rb') as file:
             model = pickle.load(file)
-            print("Modelo cargado con éxito")
+            print(Fore.CYAN+"Modelo cargado con éxito"+Fore.RESET)
             return model
     except Exception as e:
-        print("Error al cargar el modelo")
+        print(Fore.RED+"Error al cargar el modelo"+Fore.RESET)
         print(e)
         sys.exit(1)
         
@@ -616,7 +638,7 @@ def predict():
     # Añadimos la prediccion al dataframe data
     data = pd.concat([data, pd.DataFrame(prediction, columns=[args.prediction])], axis=1)
     
-    print("Predicción guardada con éxito")
+    print(Fore.GREEN+"Predicción guardada con éxito"+Fore.RESET)
 
 # Función principal
 
@@ -629,53 +651,62 @@ if __name__ == "__main__":
     # Si la carpeta output no existe la creamos
     try:
         os.makedirs('output')
-        print("Carpeta output creada con éxito")
+        print(Fore.GREEN+"Carpeta output creada con éxito"+Fore.RESET)
     except:
         pass
     # Cargamos los datos
-    print("\n- Cargando datos...")
-    data = load_data(args.file)
-    # Descargamos los recursos necesarios de nltk
-    print("\n- Descargando diccionarios...")
-    nltk.download('stopwords')
-    nltk.download('punkt')
-    nltk.download('wordnet')
-    # Preprocesamos los datos
-    print("\n- Preprocesando datos...")
-    preprocesar_datos()
+    if args.verbose:
+        print("\n- Cargando datos...")
+        data = load_data(args.file)
+        # Descargamos los recursos necesarios de nltk
+        print("\n- Descargando diccionarios...")
+        nltk.download('stopwords')
+        nltk.download('punkt')
+        nltk.download('wordnet')
+        # Preprocesamos los datos
+        print("\n- Preprocesando datos...")
+        preprocesar_datos()
+    else:
+        data = load_data(args.file)
+        # Descargamos los recursos necesarios de nltk
+        nltk.download('stopwords', quiet=True)
+        nltk.download('punkt', quiet=True)
+        nltk.download('wordnet', quiet=True)
+        # Preprocesamos los datos
+        preprocesar_datos()
     if args.debug:
         try:
-            print("\n- Guardando datos preprocesados...")
+            print(Fore.MAGENTA+"\n- Guardando datos preprocesados..."+Fore.RESET)
             data.to_csv('output/data-processed.csv', index=False)
-            print("Datos preprocesados guardados con éxito")
+            print(Fore.GREEN+"Datos preprocesados guardados con éxito"+Fore.RESET)
         except Exception as e:
-            print("Error al guardar los datos preprocesados")
+            print(Fore.RED+"Error al guardar los datos preprocesados"+Fore.RESET)
     if args.mode == "train":
         # Ejecutamos el algoritmo seleccionado
         print("\n- Ejecutando algoritmo...")
         if args.algorithm == "kNN":
             try:
                 kNN()
-                print("Algoritmo kNN ejecutado con éxito")
+                print(Fore.GREEN+"Algoritmo kNN ejecutado con éxito"+Fore.RESET)
                 sys.exit(0)
             except Exception as e:
                 print(e)
         elif args.algorithm == "decision_tree":
             try:
                 decision_tree()
-                print("Algoritmo árbol de decisión ejecutado con éxito")
+                print(Fore.GREEN+"Algoritmo árbol de decisión ejecutado con éxito"+Fore.RESET)
                 sys.exit(0)
             except Exception as e:
                 print(e)
         elif args.algorithm == "random_forest":
             try:
                 random_forest()
-                print("Algoritmo random forest ejecutado con éxito")
+                print(Fore.GREEN+"Algoritmo random forest ejecutado con éxito"+Fore.RESET)
                 sys.exit(0)
             except Exception as e:
                 print(e)
         else:
-            print("Algoritmo no soportado")
+            print(Fore.RED+"Algoritmo no soportado"+Fore.RESET)
             sys.exit(1)
     elif args.mode == "test":
         # Cargamos el modelo
@@ -685,16 +716,16 @@ if __name__ == "__main__":
         print("\n- Prediciendo...")
         try:
             predict()
-            print("Predicción realizada con éxito")
+            print(Fore.GREEN+"Predicción realizada con éxito"+Fore.RESET)
             # Guardamos el dataframe con la prediccion
             data.to_csv('output/data-prediction.csv', index=False)
-            print("Predicción guardada con éxito")
+            print(Fore.GREEN+"Predicción guardada con éxito"+Fore.RESET)
             sys.exit(0)
         except Exception as e:
             print(e)
             sys.exit(1)
     else:
-        print("Modo no soportado")
+        print(Fore.RED+"Modo no soportado"+Fore.RESET)
         sys.exit(1)
 
 

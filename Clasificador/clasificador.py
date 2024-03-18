@@ -696,3 +696,6 @@ if __name__ == "__main__":
     else:
         print("Modo no soportado")
         sys.exit(1)
+
+
+#Gracias por usar el programa creado por Ibai y Xabier

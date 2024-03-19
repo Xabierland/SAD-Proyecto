@@ -21,7 +21,7 @@ from colorama import Fore
 from sklearn.calibration import LabelEncoder
 from sklearn.metrics import f1_score, confusion_matrix, classification_report
 from sklearn.model_selection import train_test_split, GridSearchCV
-from sklearn.preprocessing import MaxAbsScaler, MinMaxScaler, Normalizer
+from sklearn.preprocessing import MaxAbsScaler, MinMaxScaler, Normalizer, StandardScaler
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
@@ -229,6 +229,10 @@ def reescaler(numerical_feature):
                 scaler = MaxAbsScaler()
                 data[numerical_feature.columns] = scaler.fit_transform(data[numerical_feature.columns])
                 print(Fore.GREEN+"Datos reescalados con éxito usando MaxAbsScaler"+Fore.RESET)
+            elif args.preprocessing["scaling"] == "standard":
+                scaler = StandardScaler()
+                data[numerical_feature.columns] = scaler.fit_transform(data[numerical_feature.columns])
+                print(Fore.GREEN+"Datos reescalados con éxito usando StandardScaler"+Fore.RESET)
             else:
                 print(Fore.YELLOW+"No se están escalando los datos"+Fore.RESET)
         else:

@@ -67,7 +67,7 @@ python clasificador.py -m train -a kNN -f iris.csv -p Especie -e accuracy -c 4 -
         "drop_features": [],                  // Columnas a eliminar (lista de strings)
         "missing_values": "impute",           // Estrategia para tratar los valores nulos (impute, drop)
         "impute_strategy": "mean",            // Estrategia para imputar los valores nulos (mean, median, most_frequent)
-        "scaling": "minmax",                  // Estrategia para escalar los valores (minmax, normalizer, maxabs)
+        "scaling": "minmax",                  // Estrategia para escalar los valores (minmax, normalizer, maxabs, standard)
         "text_process": "tf-idf",             // Estrategia para procesar el texto (tf-idf, bow)
         "sampling": "oversampling"            // Estrategia para tratar el desbalanceo de clases (oversampling, undersampling)
     },

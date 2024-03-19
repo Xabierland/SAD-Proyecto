@@ -4,7 +4,7 @@
         "drop_features": [],
         "missing_values": "impute",
         "impute_strategy": "mean",
-        "scaling": "minmax",
+        "scaling": "standard",
         "text_process": "tf-idf",
         "sampling": "undersampling"
     },

@@ -8,7 +8,6 @@ import random
 import sys
 import signal
 import argparse
-from colorama import Fore
 import pandas as pd
 import string
 import pickle
@@ -16,9 +15,10 @@ import time
 import json
 import csv
 import os
+from colorama import Fore
 # Sklearn
 from sklearn.calibration import LabelEncoder
-from sklearn.metrics import f1_score, confusion_matrix, classification_report
+from sklearn.metrics import confusion_matrix, classification_report
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.preprocessing import MaxAbsScaler, MinMaxScaler, Normalizer
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
@@ -35,6 +35,7 @@ from nltk.tokenize import word_tokenize
 from imblearn.under_sampling import RandomUnderSampler
 from imblearn.over_sampling import RandomOverSampler
 from tqdm import tqdm
+
 # Funciones auxiliares
 
 def signal_handler(sig, frame):
@@ -50,13 +51,15 @@ def parse_args():
     """
     Función para parsear los argumentos de entrada
     """
-    parse = argparse.ArgumentParser(description=Fore.MAGENTA+"Practica de algoritmos de clasificación de datos."+Fore.RESET)
-    parse.add_argument("-m", "--mode", help=Fore.YELLOW+"Modo de ejecución (train o test)"+Fore.RESET, required=True)
-    parse.add_argument("-f", "--file", help=Fore.YELLOW+"Fichero csv (/Path_to_file)"+Fore.RESET, required=True)
-    parse.add_argument("-a", "--algorithm", help=Fore.YELLOW+"Algoritmo a ejecutar (kNN, decision_tree o random_forest)"+Fore.RESET, required=True)
-    parse.add_argument("-p", "--prediction", help=Fore.YELLOW+"Columna a predecir (Nombre de la columna)"+Fore.RESET, required=True)
-    parse.add_argument("-v", "--verbose", help=Fore.YELLOW+"Mostrar información adicional"+Fore.RESET, required=False, default=False, action="store_true")
-    parse.add_argument("--debug", help=Fore.YELLOW+"Modo debug"+Fore.RESET, required=False, default=False, action="store_true")
+    parse = argparse.ArgumentParser(description="Practica de algoritmos de clasificación de datos.")
+    parse.add_argument("-m", "--mode", help="Modo de ejecución (train o test)", required=True)
+    parse.add_argument("-f", "--file", help="Fichero csv (/Path_to_file)", required=True)
+    parse.add_argument("-a", "--algorithm", help="Algoritmo a ejecutar (kNN, decision_tree o random_forest)", required=True)
+    parse.add_argument("-p", "--prediction", help="Columna a predecir (Nombre de la columna)", required=True)
+    parse.add_argument("-e", "--estimator", help="Estimador a utilizar para elegir el mejor modelo https://scikit-learn.org/stable/modules/model_evaluation.html#scoring-parameter", required=False, default=None)
+    parse.add_argument("-c", "--cpu", help="Número de CPUs a utilizar [-1 para usar todos]", required=False, default=-1, type=int)
+    parse.add_argument("-v", "--verbose", help="Muestra las metricas por la termina", required=False, default=False, action="store_true")
+    parse.add_argument("--debug", help="Modo debug [Muestra informacion extra del preprocesado y almacena el resultado del mismo en un .csv]", required=False, default=False, action="store_true")
     # Parseamos los argumentos
     args = parse.parse_args()
     
@@ -87,17 +90,6 @@ def load_data(file):
         sys.exit(1)
 
 # Funciones para calcular métricas
-
-def calculate_fscore(y_test, y_pred):
-    """
-    Función para calcular el F-score
-    :param y_test: Valores reales
-    :param y_pred: Valores predichos
-    :return: F-score (micro), F-score (macro)
-    """
-    fscore_micro = f1_score(y_test, y_pred, average='micro')
-    fscore_macro = f1_score(y_test, y_pred, average='macro')
-    return fscore_micro, fscore_macro
 
 def calculate_classification_report(y_test, y_pred):
     """
@@ -145,21 +137,22 @@ def select_features():
         print(Fore.GREEN+"Datos separados con éxito"+Fore.RESET)
         
         if args.debug:
-            print(Fore.MAGENTA+"> Columnas numéricas:\n", numerical_feature.columns+Fore.RESET)
-            print(Fore.MAGENTA+"> Columnas de texto:\n", text_feature.columns+Fore.RESET)
-            print(Fore.MAGENTA+"> Columnas categóricas:\n", categorical_feature.columns+Fore.RESET)
+            print(Fore.MAGENTA+"> Columnas numéricas:\n"+Fore.RESET, numerical_feature.columns)
+            print(Fore.MAGENTA+"> Columnas de texto:\n"+Fore.RESET, text_feature.columns)
+            print(Fore.MAGENTA+"> Columnas categóricas:\n"+Fore.RESET, categorical_feature.columns)
         return numerical_feature, text_feature, categorical_feature
     except Exception as e:
         print(Fore.RED+"Error al separar los datos"+Fore.RESET)
         print(e)
         sys.exit(1)
 
-def process_missing_values():
+def process_missing_values(numerical_feature, categorical_feature):
     """
     Procesa los valores faltantes en los datos según la estrategia especificada en los argumentos.
 
     Args:
-        None
+        numerical_feature (DataFrame): El DataFrame que contiene las características numéricas.
+        categorical_feature (DataFrame): El DataFrame que contiene las características categóricas.
 
     Returns:
         None
@@ -170,20 +163,24 @@ def process_missing_values():
     global data
     try:
         if args.preprocessing["missing_values"] == "drop":
-            data = data.dropna()
+            data = data.dropna(subset=numerical_feature.columns)
+            data = data.dropna(subset=categorical_feature.columns)
             print(Fore.GREEN+"Missing values eliminados con éxito"+Fore.RESET)
         elif args.preprocessing["missing_values"] == "impute":
             if args.preprocessing["impute_strategy"] == "mean":
-             data = data.fillna(data.mean())
-             print(Fore.GREEN+"Missing values imputados con éxito usando la media"+Fore.RESET)
+                data[numerical_feature.columns] = data[numerical_feature.columns].fillna(data[numerical_feature.columns].mean())
+                data[categorical_feature.columns] = data[categorical_feature.columns].fillna(data[categorical_feature.columns].mean())
+                print(Fore.GREEN+"Missing values imputados con éxito usando la media"+Fore.RESET)
             elif args.preprocessing["impute_strategy"] == "median":
-             data = data.fillna(data.median())
-             print(Fore.GREEN+"Missing values imputados con éxito usando la mediana"+Fore.RESET)
+                data[numerical_feature.columns] = data[numerical_feature.columns].fillna(data[numerical_feature.columns].median())
+                data[categorical_feature.columns] = data[categorical_feature.columns].fillna(data[categorical_feature.columns].median())
+                print(Fore.GREEN+"Missing values imputados con éxito usando la mediana"+Fore.RESET)
             elif args.preprocessing["impute_strategy"] == "most_frequent":
-             data = data.fillna(data.mode().iloc[0])
-             print(Fore.GREEN+"Missing values imputados con éxito usando la moda"+Fore.RESET)
+                data[numerical_feature.columns] = data[numerical_feature.columns].fillna(data[numerical_feature.columns].mode().iloc[0])
+                data[categorical_feature.columns] = data[categorical_feature.columns].fillna(data[categorical_feature.columns].mode().iloc[0])
+                print(Fore.GREEN+"Missing values imputados con éxito usando la moda"+Fore.RESET)
             else:
-             print(Fore.GREEN+"No se ha seleccionado ninguna estrategia de imputación"+Fore.RESET)
+                print(Fore.GREEN+"No se ha seleccionado ninguna estrategia de imputación"+Fore.RESET)
         else:
             print(Fore.YELLOW+"No se están tratando los missing values"+Fore.RESET)
     except Exception as e:
@@ -221,7 +218,7 @@ def reescaler(numerical_feature):
                 data[numerical_feature.columns] = scaler.fit_transform(data[numerical_feature.columns])
                 print(Fore.GREEN+"Datos reescalados con éxito usando MaxAbsScaler"+Fore.RESET)
             else:
-                print("No se están escalando los datos")
+                print(Fore.YELLOW+"No se están escalando los datos"+Fore.RESET)
         else:
             print(Fore.YELLOW+"No se han encontrado columnas numéricas"+Fore.RESET)
     except Exception as e:
@@ -245,7 +242,7 @@ def cat2num(categorical_feature):
                 data[col] = labelencoder.fit_transform(data[col])
             print(Fore.GREEN+"Datos categóricos pasados a numéricos con éxito"+Fore.RESET)
         else:
-            print(+Fore.YELLOW+"No se han encontrado columnas categóricas"+Fore.RESET)
+            print(Fore.YELLOW+"No se han encontrado columnas categóricas"+Fore.RESET)
     except Exception as e:
         print(Fore.RED+"Error al pasar los datos categóricos a numéricos"+Fore.RESET)
         print(e)
@@ -353,7 +350,7 @@ def over_under_sampling():
             print(e)
             sys.exit(1)
     else:
-        print(Fore.YELLOW+"No se realiza oversampling o undersampling en modo test"+Fore.RESET)
+        print(Fore.GREEN+"No se realiza oversampling o undersampling en modo test"+Fore.RESET)
 
 def drop_features():
     """
@@ -377,12 +374,12 @@ def preprocesar_datos():
     Función para preprocesar los datos
         1. Separamos los datos por tipos (Categoriales, numéricos y textos)
         2. Pasar los datos de categoriales a numéricos 
-        TODO 3. Tratamos missing values (Eliminar y imputar)
+        3. Tratamos missing values (Eliminar y imputar)
         4. Reescalamos los datos datos (MinMax, Normalizer, MaxAbsScaler)
         TODO 5. Simplificamos el texto (Normalizar, eliminar stopwords, stemming y ordenar alfabéticamente)
         6. Tratamos el texto (TF-IDF, BOW)
         7. Realizamos Oversampling o Undersampling
-        TODO 8. Borrar columnas no necesarias
+        8. Borrar columnas no necesarias
     :param data: Datos a preprocesar
     :return: Datos preprocesados y divididos en train y test
     """
@@ -397,7 +394,7 @@ def preprocesar_datos():
         cat2num(categorical_feature)
 
         # Tratamos missing values
-        process_missing_values()
+        process_missing_values(numerical_feature, categorical_feature)
 
         # Reescalamos los datos numéricos
         reescaler(numerical_feature)
@@ -419,6 +416,8 @@ def preprocesar_datos():
     else:
         print(Fore.RED+"Algoritmo no soportado"+Fore.RESET)
         sys.exit(1)
+
+    drop_features()
 
     return data
 
@@ -488,12 +487,10 @@ def mostrar_resultados(gs, x_dev, y_dev):
     - Matriz de confusión del clasificador en el conjunto de desarrollo.
     """
     if args.verbose:
-        print("> Mejores parametros:\n", gs.best_params_)
-        print("> Mejor puntuacion:\n", gs.best_score_)
-        print("> F1-score micro:\n", calculate_fscore(y_dev, gs.predict(x_dev))[0])
-        print("> F1-score macro:\n", calculate_fscore(y_dev, gs.predict(x_dev))[1])
-        print("> Informe de clasificación:\n", calculate_classification_report(y_dev, gs.predict(x_dev)))
-        print("> Matriz de confusión:\n", calculate_confusion_matrix(y_dev, gs.predict(x_dev)))
+        print(Fore.MAGENTA+"> Mejores parametros:\n"+Fore.RESET, gs.best_params_)
+        print(Fore.MAGENTA+"> Mejor puntuacion:\n"+Fore.RESET, gs.best_score_)
+        print(Fore.MAGENTA+"> Informe de clasificación:\n"+Fore.RESET, calculate_classification_report(y_dev, gs.predict(x_dev)))
+        print(Fore.MAGENTA+"> Matriz de confusión:\n"+Fore.RESET, calculate_confusion_matrix(y_dev, gs.predict(x_dev)))
 
 def kNN():
     """
@@ -511,7 +508,7 @@ def kNN():
     # Hacemos un barrido de hiperparametros
 
     with tqdm(total=100, desc='Procesando kNN', unit='iter', leave=True) as pbar:
-        gs = GridSearchCV(KNeighborsClassifier(), args.kNN, cv=5, n_jobs=args.cpu, )
+        gs = GridSearchCV(KNeighborsClassifier(), args.kNN, cv=5, n_jobs=args.cpu, scoring=args.estimator)
         start_time = time.time()
         gs.fit(x_train, y_train)
         end_time = time.time()
@@ -614,7 +611,7 @@ def load_model():
     try:
         with open('output/modelo.pkl', 'rb') as file:
             model = pickle.load(file)
-            print(Fore.CYAN+"Modelo cargado con éxito"+Fore.RESET)
+            print(Fore.GREEN+"Modelo cargado con éxito"+Fore.RESET)
             return model
     except Exception as e:
         print(Fore.RED+"Error al cargar el modelo"+Fore.RESET)
@@ -638,8 +635,6 @@ def predict():
     # Añadimos la prediccion al dataframe data
     data = pd.concat([data, pd.DataFrame(prediction, columns=[args.prediction])], axis=1)
     
-    print(Fore.GREEN+"Predicción guardada con éxito"+Fore.RESET)
-
 # Función principal
 
 if __name__ == "__main__":
@@ -649,34 +644,30 @@ if __name__ == "__main__":
     # Parseamos los argumentos
     args = parse_args()
     # Si la carpeta output no existe la creamos
+    print("\n- Creando carpeta output...")
     try:
         os.makedirs('output')
         print(Fore.GREEN+"Carpeta output creada con éxito"+Fore.RESET)
-    except:
-        pass
+    except FileExistsError:
+        print(Fore.GREEN+"La carpeta output ya existe"+Fore.RESET)
+    except Exception as e:
+        print(Fore.RED+"Error al crear la carpeta output"+Fore.RESET)
+        print(e)
+        sys.exit(1)
     # Cargamos los datos
-    if args.verbose:
-        print("\n- Cargando datos...")
-        data = load_data(args.file)
-        # Descargamos los recursos necesarios de nltk
-        print("\n- Descargando diccionarios...")
-        nltk.download('stopwords')
-        nltk.download('punkt')
-        nltk.download('wordnet')
-        # Preprocesamos los datos
-        print("\n- Preprocesando datos...")
-        preprocesar_datos()
-    else:
-        data = load_data(args.file)
-        # Descargamos los recursos necesarios de nltk
-        nltk.download('stopwords', quiet=True)
-        nltk.download('punkt', quiet=True)
-        nltk.download('wordnet', quiet=True)
-        # Preprocesamos los datos
-        preprocesar_datos()
+    print("\n- Cargando datos...")
+    data = load_data(args.file)
+    # Descargamos los recursos necesarios de nltk
+    print("\n- Descargando diccionarios...")
+    nltk.download('stopwords')
+    nltk.download('punkt')
+    nltk.download('wordnet')
+    # Preprocesamos los datos
+    print("\n- Preprocesando datos...")
+    preprocesar_datos()
     if args.debug:
         try:
-            print(Fore.MAGENTA+"\n- Guardando datos preprocesados..."+Fore.RESET)
+            print("\n- Guardando datos preprocesados...")
             data.to_csv('output/data-processed.csv', index=False)
             print(Fore.GREEN+"Datos preprocesados guardados con éxito"+Fore.RESET)
         except Exception as e:
@@ -727,6 +718,3 @@ if __name__ == "__main__":
     else:
         print(Fore.RED+"Modo no soportado"+Fore.RESET)
         sys.exit(1)
-
-
-#Gracias por usar el programa creado por Ibai y Xabier

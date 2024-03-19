@@ -1,5 +1,6 @@
 {
     "preprocessing": {
+        "unique_category_threshold": 50,
         "drop_features": [],
         "missing_values": "impute",
         "impute_strategy": "mean",
@@ -30,6 +31,5 @@
         "min_samples_leaf": [1, 2, 4],
         "max_features": ["sqrt", "log2"],
         "bootstrap": [true, false]
-    },
-    "cpu": -1
+    }
 }

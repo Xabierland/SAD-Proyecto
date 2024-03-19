@@ -1,11 +1,11 @@
 {
     "preprocessing": {
-        "unique_category_threshold": 50,
+        "unique_category_threshold": 51,
         "drop_features": [],
         "missing_values": "impute",
         "impute_strategy": "mean",
-        "scaling": "normalizer",
-        "text_process": null,
+        "scaling": "minmax",
+        "text_process": "tf-idf",
         "sampling": "oversampling"
     },
     "kNN": {
@@ -31,6 +31,5 @@
         "min_samples_leaf": [1, 2, 4],
         "max_features": ["sqrt", "log2"],
         "bootstrap": [false]
-    },
-    "cpu": -1
+    }
 }

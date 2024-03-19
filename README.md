@@ -5,7 +5,7 @@
 
 ### Miembros
 
-- [Xabier Gabiña](https://github.comn/Xabierland)
+- [Xabier Gabiña](https://github.com/Xabierland)
 - [Ibai Sologuestoa](https://github.com/IbaiS94)
 
 ### Descripción

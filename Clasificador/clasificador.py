@@ -9,6 +9,7 @@ import sys
 import signal
 import argparse
 import pandas as pd
+import numpy as np
 import string
 import pickle
 import time
@@ -58,7 +59,7 @@ def parse_args():
     parse.add_argument("-p", "--prediction", help="Columna a predecir (Nombre de la columna)", required=True)
     parse.add_argument("-e", "--estimator", help="Estimador a utilizar para elegir el mejor modelo https://scikit-learn.org/stable/modules/model_evaluation.html#scoring-parameter", required=False, default=None)
     parse.add_argument("-c", "--cpu", help="Número de CPUs a utilizar [-1 para usar todos]", required=False, default=-1, type=int)
-    parse.add_argument("-v", "--verbose", help="Muestra las metricas por la termina", required=False, default=False, action="store_true")
+    parse.add_argument("-v", "--verbose", help="Muestra las metricas por la terminal", required=False, default=False, action="store_true")
     parse.add_argument("--debug", help="Modo debug [Muestra informacion extra del preprocesado y almacena el resultado del mismo en un .csv]", required=False, default=False, action="store_true")
     # Parseamos los argumentos
     args = parse.parse_args()
@@ -253,7 +254,7 @@ def cat2num(categorical_feature):
                 data[col] = labelencoder.fit_transform(data[col])
             print(Fore.GREEN+"Datos categóricos pasados a numéricos con éxito"+Fore.RESET)
         else:
-            print(Fore.YELLOW+"No se han encontrado columnas categóricas"+Fore.RESET)
+            print(Fore.YELLOW+"No se han encontrado columnas categóricas que pasar a numericas"+Fore.RESET)
     except Exception as e:
         print(Fore.RED+"Error al pasar los datos categóricos a numéricos"+Fore.RESET)
         print(e)
@@ -639,6 +640,8 @@ def predict():
 # Función principal
 
 if __name__ == "__main__":
+    # Fijamos la semilla
+    np.random.seed(42)
     print("=== Clasificador ===")
     # Manejamos la señal SIGINT (Ctrl+C)
     signal.signal(signal.SIGINT, signal_handler)

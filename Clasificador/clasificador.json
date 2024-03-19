@@ -6,7 +6,7 @@
         "impute_strategy": "mean",
         "scaling": "minmax",
         "text_process": "tf-idf",
-        "sampling": "oversampling"
+        "sampling": null
     },
     "kNN": {
         "n_neighbors": [3, 5, 7],

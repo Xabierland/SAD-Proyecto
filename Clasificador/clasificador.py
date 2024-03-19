@@ -18,7 +18,7 @@ import os
 from colorama import Fore
 # Sklearn
 from sklearn.calibration import LabelEncoder
-from sklearn.metrics import confusion_matrix, classification_report
+from sklearn.metrics import f1_score, confusion_matrix, classification_report
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.preprocessing import MaxAbsScaler, MinMaxScaler, Normalizer
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
@@ -90,6 +90,17 @@ def load_data(file):
         sys.exit(1)
 
 # Funciones para calcular métricas
+
+def calculate_fscore(y_test, y_pred):
+    """
+    Función para calcular el F-score
+    :param y_test: Valores reales
+    :param y_pred: Valores predichos
+    :return: F-score (micro), F-score (macro)
+    """
+    fscore_micro = f1_score(y_test, y_pred, average='micro')
+    fscore_macro = f1_score(y_test, y_pred, average='macro')
+    return fscore_micro, fscore_macro
 
 def calculate_classification_report(y_test, y_pred):
     """
@@ -386,36 +397,23 @@ def preprocesar_datos():
     # Separamos los datos por tipos
     numerical_feature, text_feature, categorical_feature = select_features()
 
-    if args.algorithm == "kNN":
-        # Simplificamos el texto
-        simplify_text(text_feature)
+    # Simplificamos el texto
+    simplify_text(text_feature)
 
-        # Pasar los datos a categoriales a numéricos
-        cat2num(categorical_feature)
+    # Pasar los datos a categoriales a numéricos
+    cat2num(categorical_feature)
 
-        # Tratamos missing values
-        process_missing_values(numerical_feature, categorical_feature)
+    # Tratamos missing values
+    process_missing_values(numerical_feature, categorical_feature)
 
-        # Reescalamos los datos numéricos
-        reescaler(numerical_feature)
-        
-        # Realizamos Oversampling o Undersampling
-        over_under_sampling()
-    elif args.algorithm == "decision_tree" or args.algorithm == "random_forest":
-        # Simplificamos el texto
-        simplify_text(text_feature)
-
-        # Pasar los datos a categoriales a numéricos
-        cat2num(categorical_feature)
-
-        # Tratamos el texto
-        process_text(text_feature)
-
-        # Realizamos Oversampling o Undersampling
-        over_under_sampling()
-    else:
-        print(Fore.RED+"Algoritmo no soportado"+Fore.RESET)
-        sys.exit(1)
+    # Reescalamos los datos numéricos
+    reescaler(numerical_feature)
+    
+    # Tratamos el texto
+    process_text(text_feature)
+    
+    # Realizamos Oversampling o Undersampling
+    over_under_sampling()
 
     drop_features()
 
@@ -489,6 +487,8 @@ def mostrar_resultados(gs, x_dev, y_dev):
     if args.verbose:
         print(Fore.MAGENTA+"> Mejores parametros:\n"+Fore.RESET, gs.best_params_)
         print(Fore.MAGENTA+"> Mejor puntuacion:\n"+Fore.RESET, gs.best_score_)
+        print(Fore.MAGENTA+"> F1-score micro:\n"+Fore.RESET, calculate_fscore(y_dev, gs.predict(x_dev))[0])
+        print(Fore.MAGENTA+"> F1-score macro:\n"+Fore.RESET, calculate_fscore(y_dev, gs.predict(x_dev))[1])
         print(Fore.MAGENTA+"> Informe de clasificación:\n"+Fore.RESET, calculate_classification_report(y_dev, gs.predict(x_dev)))
         print(Fore.MAGENTA+"> Matriz de confusión:\n"+Fore.RESET, calculate_confusion_matrix(y_dev, gs.predict(x_dev)))
 
@@ -520,11 +520,12 @@ def kNN():
         pbar.update(0)
     execution_time = end_time - start_time
     print("Tiempo de ejecución:"+Fore.MAGENTA, execution_time,Fore.RESET+ "segundos")
-    # Guardamos el modelo utilizando pickle
-    save_model(gs)
     
     # Mostramos los resultados
     mostrar_resultados(gs, x_dev, y_dev)
+    
+    # Guardamos el modelo utilizando pickle
+    save_model(gs)
 
 def decision_tree():
     """
@@ -540,7 +541,7 @@ def decision_tree():
     
     # Hacemos un barrido de hiperparametros
     with tqdm(total=100, desc='Procesando decision tree', unit='iter', leave=True) as pbar:
-        gs = GridSearchCV(DecisionTreeClassifier(), args.decision_tree, cv=5, n_jobs=args.cpu,)
+        gs = GridSearchCV(DecisionTreeClassifier(), args.decision_tree, cv=5, n_jobs=args.cpu, scoring=args.estimator)
         start_time = time.time()
         gs.fit(x_train, y_train)
         end_time = time.time()
@@ -553,11 +554,11 @@ def decision_tree():
     execution_time = end_time - start_time
     print("Tiempo de ejecución:"+Fore.MAGENTA, execution_time,Fore.RESET+ "segundos")
     
-    # Guardamos el modelo utilizando pickle
-    save_model(gs)
-        
     # Mostramos los resultados
     mostrar_resultados(gs, x_dev, y_dev)
+    
+    # Guardamos el modelo utilizando pickle
+    save_model(gs)
     
 def random_forest():
     """
@@ -577,7 +578,7 @@ def random_forest():
     
     # Hacemos un barrido de hiperparametros
     with tqdm(total=100, desc='Procesando random forest', unit='iter', leave=True) as pbar:
-        gs = GridSearchCV(RandomForestClassifier(), args.random_forest, cv=5, n_jobs=args.cpu,)
+        gs = GridSearchCV(RandomForestClassifier(), args.random_forest, cv=5, n_jobs=args.cpu, scoring=args.estimator)
         start_time = time.time()
         gs.fit(x_train, y_train)
         end_time = time.time()
@@ -590,11 +591,11 @@ def random_forest():
     execution_time = end_time - start_time
     print("Tiempo de ejecución:"+Fore.MAGENTA, execution_time,Fore.RESET+ "segundos")
     
-    # Guardamos el modelo utilizando pickle
-    save_model(gs)
-    
     # Mostramos los resultados
     mostrar_resultados(gs, x_dev, y_dev)
+    
+    # Guardamos el modelo utilizando pickle
+    save_model(gs)
 
 # Funciones para predecir con un modelo
 

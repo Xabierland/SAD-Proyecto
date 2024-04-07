@@ -18,6 +18,10 @@ Script de python para preprocesar conjuntos de datos y realizar predicciones con
 
 - [Xabier Gabiña](https://github.com/Xabierland)
 - [Ibai Sologuestoa](https://github.com/IbaiS94)
+- [Unai García](https://github.com/unaigarcia02)
+- [Luken Bilbao]()
+- []()
+- []()
 
 ### Descripción
 

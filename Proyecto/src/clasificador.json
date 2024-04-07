@@ -1,0 +1,16 @@
+{
+    "preprocessing": {
+        "unique_category_threshold": 51,
+        "drop_features": [],
+        "missing_values": "impute",
+        "impute_strategy": "mean",
+        "scaling": "standard",
+        "text_process": "tf-idf",
+        "sampling": "undersampling"
+    },
+    "lda": {
+        "covariance_estimator": ["svd"],
+        "n_components": [10],
+        "shrinkage": ["auto"]
+    }
+}

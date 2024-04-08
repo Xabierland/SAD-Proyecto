@@ -31,12 +31,6 @@ conda activate sad
 pip install -r requirements.txt
 ```
 
-5. Instalar tablau
-
-```bash
-
-```
-
 ## Ayuda
 
 ```bash

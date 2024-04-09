@@ -12,7 +12,7 @@
 
 Script de python para preprocesar conjuntos de datos y realizar predicciones con modelos de clasificación.
 
-## Clustering
+## Proyecto
 
 ### Miembros
 

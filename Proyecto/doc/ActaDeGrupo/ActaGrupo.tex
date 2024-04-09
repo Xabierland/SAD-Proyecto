@@ -1,0 +1,50 @@
+\documentclass{report}
+\usepackage[spanish]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx, longtable, float, titlesec, hyperref, enumitem, dingbat}
+\usepackage[dvipsnames]{xcolor}
+\usepackage[margin=4cm]{geometry}
+
+\hypersetup{
+    hidelinks = true
+}
+
+\titleformat{\chapter}[display]
+  {\normalfont\bfseries}{}{0pt}{\Huge}
+
+\begin{document}
+    \begin{titlepage}
+        \centering
+        \includegraphics[width=0.6\textwidth]{./img/logo.jpg}\\
+        \vspace{1cm}
+        \LARGE Sistemas de Apoyo a la Decisión\\
+        \vspace{0.5cm}
+        \Large Ingeniería Informática de Gestión y Sistemas de Información\\
+        \vspace{3cm}
+        \Huge Acta de Grupo\\
+        \vspace{2.5cm}
+        \vfill
+        \large
+        \today
+    \end{titlepage}
+    \section*{Nombre del grupo}
+
+    \textbf{LInUX}
+
+    \section*{Participantes}
+    \begin{center}
+        \begin{longtable}{|p{6cm}|p{6cm}|}
+            \hline
+            \textbf{Nombres y Apellido} & \textbf{Puesto}\\
+            \hline
+            Xabier Gabiña & Topic Modelling Líder\\
+            \hline
+            Ibai Sologuestoa & Sentiment Analysis Líder\\
+            \hline
+            Unai Garcia & Visualización\\
+            \hline
+            Luken Bilbao & Visualización Líder\\
+            \hline
+        \end{longtable}
+    \end{center}
+\end{document}

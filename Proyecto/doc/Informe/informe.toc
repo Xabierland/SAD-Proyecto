@@ -1,0 +1,23 @@
+\babel@toc {spanish}{}\relax 
+\contentsline {chapter}{\numberline {1}Tableau: Análisis de los Datos iniciales}{5}{chapter.1}%
+\contentsline {chapter}{\numberline {2}Datos para clasificación: Análisis, Preproceso y Experimentación}{6}{chapter.2}%
+\contentsline {section}{\numberline {2.1}Datos}{6}{section.2.1}%
+\contentsline {subsection}{\numberline {2.1.1}División entre Train Dev y Test}{6}{subsection.2.1.1}%
+\contentsline {subsection}{\numberline {2.1.2}Distribución de las clases en cada conjunto}{6}{subsection.2.1.2}%
+\contentsline {subsection}{\numberline {2.1.3}Descripción del preproceso}{6}{subsection.2.1.3}%
+\contentsline {subsection}{\numberline {2.1.4}Primeros resultados}{6}{subsection.2.1.4}%
+\contentsline {subsection}{\numberline {2.1.5}Descripción del Proceso de Submuestreo o Sobremuestreo}{6}{subsection.2.1.5}%
+\contentsline {section}{\numberline {2.2}Algoritmos, link a la documentación y nombre de los hiperparámetros empleados}{6}{section.2.2}%
+\contentsline {subsection}{\numberline {2.2.1}Experimentación: Algoritmos empleados y Breve Descripción}{6}{subsection.2.2.1}%
+\contentsline {subsection}{\numberline {2.2.2}Resultados sobre el Development}{6}{subsection.2.2.2}%
+\contentsline {subsubsection}{\numberline {2.2.2.1}Optimizando los resutlados de la clase negativa}{6}{subsubsection.2.2.2.1}%
+\contentsline {subsubsection}{\numberline {2.2.2.2}Optimizando los resultados de la clase positiva}{6}{subsubsection.2.2.2.2}%
+\contentsline {subsubsection}{\numberline {2.2.2.3}Sin optimizar ninguna clase en particular}{6}{subsubsection.2.2.2.3}%
+\contentsline {subsection}{\numberline {2.2.3}Discusión sobre el Sentiment Analysis}{6}{subsection.2.2.3}%
+\contentsline {subsection}{\numberline {2.2.4}Conclusión sobre el Sentiment Analysis}{6}{subsection.2.2.4}%
+\contentsline {chapter}{\numberline {3}Datos para el Topic Modeling: Experimentación}{7}{chapter.3}%
+\contentsline {section}{\numberline {3.1}Algoritmos, link a la documentación y nombre de los hiperparámetros empleados}{7}{section.3.1}%
+\contentsline {subsection}{\numberline {3.1.1}Experimentación: Algoritmos empleados y Breve Descripción}{7}{subsection.3.1.1}%
+\contentsline {subsection}{\numberline {3.1.2}Resultados}{7}{subsection.3.1.2}%
+\contentsline {subsection}{\numberline {3.1.3}Discusión sobre los descubrimientos realizados en la tarea de Topic Modeling}{7}{subsection.3.1.3}%
+\contentsline {subsection}{\numberline {3.1.4}Conclusión sobre la tarea de Topic Modeling}{7}{subsection.3.1.4}%

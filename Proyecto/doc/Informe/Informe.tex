@@ -1,0 +1,71 @@
+\documentclass{report}
+\usepackage[spanish]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx, longtable, float, titlesec, hyperref, enumitem, dingbat}
+\usepackage[dvipsnames]{xcolor}
+\usepackage[margin=3cm]{geometry}
+
+% Cambia el color de los links
+\hypersetup{
+    hidelinks = true
+}
+
+% Elimina la palabra "Capítulo" de los títulos de los capítulos
+\titleformat{\chapter}[display]
+  {\normalfont\bfseries}{}{0pt}{\Huge}
+
+% Añade numeración a los subsubsections y los añade al índice
+\setcounter{secnumdepth}{4}
+\setcounter{tocdepth}{4}
+
+\begin{document}
+    \begin{titlepage}
+        \centering
+        \includegraphics[width=0.6\textwidth]{./img/logo.jpg}\\
+        \vspace{1cm}
+        \LARGE Sistemas de Apoyo a la Decisión\\
+        \vspace{0.5cm}
+        \Large Ingeniería Informática de Gestión y Sistemas de Información\\
+        \vspace{3cm}
+        \Huge Informe\\
+        \huge LInUX\\
+        \vspace{2.5cm}
+        \Large Autores:\\
+        \vspace{0.2cm}
+        \large Xabier Gabiña\\
+        \large Ibai Sologuestoa\\
+        \large Unai Garcia\\
+        \large Luken Bilbao\\
+        \vfill
+        \today
+    \end{titlepage}
+    \tableofcontents
+    \listoffigures
+    \listoftables
+    \chapter*{Acrónimos}
+    \chapter{Tableau: Análisis de los Datos iniciales}
+    \chapter{Datos para clasificación: Análisis, Preproceso y Experimentación}
+        \section{Datos}
+            \subsection{División entre Train Dev y Test}
+            \subsection{Distribución de las clases en cada conjunto}
+            \subsection{Descripción del preproceso}
+            \subsection{Primeros resultados}
+            \subsection{Descripción del Proceso de Submuestreo o Sobremuestreo}
+        \section{Algoritmos, link a la documentación y nombre de los hiperparámetros empleados}
+            \subsection{Experimentación: Algoritmos empleados y Breve Descripción}
+            \subsection{Resultados sobre el Development}
+                \subsubsection{Optimizando los resutlados de la clase negativa}
+                \subsubsection{Optimizando los resultados de la clase positiva}
+                \subsubsection{Sin optimizar ninguna clase en particular}
+            \subsection{Discusión sobre el Sentiment Analysis}
+            \subsection{Conclusión sobre el Sentiment Analysis}
+    \chapter{Datos para el Topic Modeling: Experimentación}
+        \section{Algoritmos, link a la documentación y nombre de los hiperparámetros empleados}
+            \subsection{Experimentación: Algoritmos empleados y Breve Descripción}
+            \subsection{Resultados}
+            \subsection{Discusión sobre los descubrimientos realizados en la tarea de Topic Modeling}
+            \subsection{Conclusión sobre la tarea de Topic Modeling}
+    % \addcontentsline{toc}{chapter}{Bibliografía}
+    % \bibliography{bibliography}
+    % \bibliographystyle{plainnat}
+\end{document}

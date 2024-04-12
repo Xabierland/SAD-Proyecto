@@ -389,10 +389,10 @@ def preprocesar_datos():
     """
     Función para preprocesar los datos
         1. Separamos los datos por tipos (Categoriales, numéricos y textos)
-        2. Pasar los datos de categoriales a numéricos 
+        2. Pasar los datos de categoriales a numéricos
         3. Tratamos missing values (Eliminar y imputar)
         4. Reescalamos los datos datos (MinMax, Normalizer, MaxAbsScaler)
-        TODO 5. Simplificamos el texto (Normalizar, eliminar stopwords, stemming y ordenar alfabéticamente)
+        5. Simplificamos el texto (Normalizar, eliminar stopwords, stemming y ordenar alfabéticamente)
         6. Tratamos el texto (TF-IDF, BOW)
         7. Realizamos Oversampling o Undersampling
         8. Borrar columnas no necesarias

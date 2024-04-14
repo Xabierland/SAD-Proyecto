@@ -21,6 +21,8 @@ from colorama import Fore
 from sklearn.calibration import LabelEncoder
 from sklearn.metrics import f1_score, confusion_matrix, classification_report
 from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import MaxAbsScaler, MinMaxScaler, Normalizer, StandardScaler
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 from sklearn.neighbors import KNeighborsClassifier
@@ -36,6 +38,7 @@ from nltk.tokenize import word_tokenize
 from imblearn.under_sampling import RandomUnderSampler
 from imblearn.over_sampling import RandomOverSampler
 from tqdm import tqdm
+from sklearn.feature_extraction.text import TfidfTransformer
 
 # Funciones auxiliares
 
@@ -55,7 +58,6 @@ def parse_args():
     parse = argparse.ArgumentParser(description="Practica de algoritmos de clasificación de datos.")
     parse.add_argument("-m", "--mode", help="Modo de ejecución (train o test)", required=True)
     parse.add_argument("-f", "--file", help="Fichero csv (/Path_to_file)", required=True)
-    parse.add_argument("-a", "--algorithm", help="Algoritmo a ejecutar (kNN, decision_tree o random_forest)", required=True)
     parse.add_argument("-p", "--prediction", help="Columna a predecir (Nombre de la columna)", required=True)
     parse.add_argument("-e", "--estimator", help="Estimador a utilizar para elegir el mejor modelo https://scikit-learn.org/stable/modules/model_evaluation.html#scoring-parameter", required=False, default=None)
     parse.add_argument("-c", "--cpu", help="Número de CPUs a utilizar [-1 para usar todos]", required=False, default=-1, type=int)
@@ -497,93 +499,38 @@ def mostrar_resultados(gs, x_dev, y_dev):
         print(Fore.MAGENTA+"> Informe de clasificación:\n"+Fore.RESET, calculate_classification_report(y_dev, gs.predict(x_dev)))
         print(Fore.MAGENTA+"> Matriz de confusión:\n"+Fore.RESET, calculate_confusion_matrix(y_dev, gs.predict(x_dev)))
 
-def kNN():
-    """
-    Función para implementar el algoritmo kNN.
-    Hace un barrido de hiperparametros para encontrar los parametros optimos
-
-    :param data: Conjunto de datos para realizar la clasificación.
-    :type data: pandas.DataFrame
-    :return: Tupla con la clasificación de los datos.
-    :rtype: tuple
-    """
-    # Dividimos los datos en entrenamiento y dev
+def convertirRating():
+    global data
+    data[args.preprocessing["rating_to_cat"]] = data[args.preprocessing["rating_to_cat"]].map({10: "positiva", 9: "positiva", 8: "positiva", 7: "positiva", 6: "neutra", 5: "neutra", 4: "negativa", 3: "negativa", 2: "negativa", 1: "negativa", 0: "negativa"})
+    data.to_csv('output/dataConvertida.csv', index=False)
+def naiveBayes():
     x_train, x_dev, y_train, y_dev = divide_data()
-    
-    # Hacemos un barrido de hiperparametros
 
-    with tqdm(total=100, desc='Procesando kNN', unit='iter', leave=True) as pbar:
-        gs = GridSearchCV(KNeighborsClassifier(), args.kNN, cv=5, n_jobs=args.cpu, scoring=args.estimator)
-        start_time = time.time()
-        gs.fit(x_train, y_train)
-        end_time = time.time()
-        for i in range(100):
-            time.sleep(random.uniform(0.06, 0.15))  # Esperamos un tiempo aleatorio
-            pbar.update(random.random()*2)  # Actualizamos la barra con un valor aleatorio
-        pbar.n = 100
-        pbar.last_print_n = 100
-        pbar.update(0)
-    execution_time = end_time - start_time
-    print("Tiempo de ejecución:"+Fore.MAGENTA, execution_time,Fore.RESET+ "segundos")
-    
-    # Mostramos los resultados
-    mostrar_resultados(gs, x_dev, y_dev)
-    
-    # Guardamos el modelo utilizando pickle
-    save_model(gs)
-
-def decision_tree():
     """
-    Función para implementar el algoritmo de árbol de decisión.
+    # Suponiendo que 'datos' es tu conjunto de datos y 'etiquetas' son las etiquetas correspondientes
 
-    :param data: Conjunto de datos para realizar la clasificación.
-    :type data: pandas.DataFrame
-    :return: Tupla con la clasificación de los datos.
-    :rtype: tuple
-    """
-    # Dividimos los datos en entrenamiento y dev
-    x_train, x_dev, y_train, y_dev = divide_data()
-    
-    # Hacemos un barrido de hiperparametros
-    with tqdm(total=100, desc='Procesando decision tree', unit='iter', leave=True) as pbar:
-        gs = GridSearchCV(DecisionTreeClassifier(), args.decision_tree, cv=5, n_jobs=args.cpu, scoring=args.estimator)
-        start_time = time.time()
-        gs.fit(x_train, y_train)
-        end_time = time.time()
-        for i in range(100):
-            time.sleep(random.uniform(0.06, 0.15))  # Esperamos un tiempo aleatorio
-            pbar.update(random.random()*2)  # Actualizamos la barra con un valor aleatorio
-        pbar.n = 100
-        pbar.last_print_n = 100
-        pbar.update(0)
-    execution_time = end_time - start_time
-    print("Tiempo de ejecución:"+Fore.MAGENTA, execution_time,Fore.RESET+ "segundos")
-    
-    # Mostramos los resultados
-    mostrar_resultados(gs, x_dev, y_dev)
-    
-    # Guardamos el modelo utilizando pickle
-    save_model(gs)
-    
-def random_forest():
-    """
-    Función que entrena un modelo de Random Forest utilizando GridSearchCV para encontrar los mejores hiperparámetros.
-    Divide los datos en entrenamiento y desarrollo, realiza la búsqueda de hiperparámetros, guarda el modelo entrenado
-    utilizando pickle y muestra los resultados utilizando los datos de desarrollo.
+    # Crear el pipeline con CountVectorizer, TfidfTransformer y MultinomialNB
+    text_clf = Pipeline([
+        ('vect', CountVectorizer()),
+        ('tfidf', TfidfTransformer()),
+        ('clf', MultinomialNB())
+    ])
 
-    Parámetros:
-        Ninguno
+    # Entrenar el modelo
+    text_clf.fit(X_train, y_train)
 
-    Retorna:
-        Ninguno
-    """
-    
-    # Dividimos los datos en entrenamiento y dev
-    x_train, x_dev, y_train, y_dev = divide_data()
-    
-    # Hacemos un barrido de hiperparametros
+    # Guardar el modelo con pickle
+    with open('modelo.pkl', 'wb') as file:
+        pickle.dump(text_clf, file)
+
+    # Realizar la predicción
+    predicted = text_clf.predict(X_test)
+
+    # Calcular la precisión
+    accuracy = np.mean(predicted == y_test)
+    print(f'Precisión del modelo: {accuracy}') """
     with tqdm(total=100, desc='Procesando random forest', unit='iter', leave=True) as pbar:
-        gs = GridSearchCV(RandomForestClassifier(), args.random_forest, cv=5, n_jobs=args.cpu, scoring=args.estimator)
+        gs = GridSearchCV(MultinomialNB, cv=5, n_jobs=args.cpu, scoring=args.estimator)
         start_time = time.time()
         gs.fit(x_train, y_train)
         end_time = time.time()
@@ -601,8 +548,6 @@ def random_forest():
     
     # Guardamos el modelo utilizando pickle
     save_model(gs)
-
-# Funciones para predecir con un modelo
 
 def load_model():
     """
@@ -673,6 +618,7 @@ if __name__ == "__main__":
     # Preprocesamos los datos
     print("\n- Preprocesando datos...")
     preprocesar_datos()
+    convertirRating()
     if args.debug:
         try:
             print("\n- Guardando datos preprocesados...")
@@ -683,30 +629,12 @@ if __name__ == "__main__":
     if args.mode == "train":
         # Ejecutamos el algoritmo seleccionado
         print("\n- Ejecutando algoritmo...")
-        if args.algorithm == "kNN":
-            try:
-                kNN()
-                print(Fore.GREEN+"Algoritmo kNN ejecutado con éxito"+Fore.RESET)
+        try:    
+                naiveBayes()
+                print(Fore.GREEN+"Algoritmo naive bayes ejecutado con éxito"+Fore.RESET)
                 sys.exit(0)
-            except Exception as e:
+        except Exception as e:
                 print(e)
-        elif args.algorithm == "decision_tree":
-            try:
-                decision_tree()
-                print(Fore.GREEN+"Algoritmo árbol de decisión ejecutado con éxito"+Fore.RESET)
-                sys.exit(0)
-            except Exception as e:
-                print(e)
-        elif args.algorithm == "random_forest":
-            try:
-                random_forest()
-                print(Fore.GREEN+"Algoritmo random forest ejecutado con éxito"+Fore.RESET)
-                sys.exit(0)
-            except Exception as e:
-                print(e)
-        else:
-            print(Fore.RED+"Algoritmo no soportado"+Fore.RESET)
-            sys.exit(1)
     elif args.mode == "test":
         # Cargamos el modelo
         print("\n- Cargando modelo...")

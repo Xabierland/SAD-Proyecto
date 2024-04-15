@@ -182,18 +182,35 @@ def process_text(text_feature):
         if text_feature.columns.size > 0:
             # Minúsculas
             for col in text_feature.columns:
-                data[col] = data[col].apply(lambda x: [word.lower() for word in x])
+                data[col] = data[col].apply(lambda x: x.lower())
                 # Tokenizamos
                 tokenizer = RegexpTokenizer(r'\w+')
-                data[col] = data[col].apply(lambda x: [tokenizer.tokenize(text.lower()) for text in x])
+                data[col] = data[col].apply(lambda x: tokenizer.tokenize(x))
                 # Borrar numeros
-                data[col] = data[col].apply(lambda x: [[word for word in text if not word.isnumeric()] for text in x])
+                data[col] = data[col].apply(lambda x: [word for word in x if not word.isnumeric()])
                 # Borrar stopwords
             
         else:
             print(Fore.YELLOW+"No hay columnas de texto en el dataset"+Fore.RESET)
     except Exception as e:
         print(Fore.RED+"Error al simplificar el texto"+Fore.RESET)
+        print(e)
+        sys.exit(1)
+
+def unir_columnas():
+    global data
+    try:
+        # Tenemos X columnas, cada una con una lista de palabras, unimos las X columnas en una sola columna y una sola lista
+        data['text'] = data[data.columns[0]].apply(lambda x: x)
+        for i in range(1, len(data.columns)):
+            data['text'] = data['text'] + data[data.columns[i]].apply(lambda x: x)
+        
+        # Borramos las columnas que hemos unido
+        data.drop(data.columns[0:len(data.columns)-1], axis=1, inplace=True)
+                
+        print(Fore.GREEN+"Columnas unidas con éxito"+Fore.RESET)
+    except Exception as e:
+        print(Fore.RED+"Error al unir las columnas"+Fore.RESET)
         print(e)
         sys.exit(1)
 
@@ -216,10 +233,7 @@ def preprocesar_datos():
     :return: Datos preprocesados
     """
     # Eliminamos columnas no necesarias
-    drop_features()
-    
-    # Tratamos missing values
-    
+    drop_features()    
     
     # Separamos los datos por tipos
     numerical_feature, text_feature, categorical_feature = select_features()
@@ -227,7 +241,8 @@ def preprocesar_datos():
     # Simplificamos el texto
     process_text(text_feature)
     
-    
+    # Unir todas las columnas en una
+    unir_columnas()
 
 ## Clustering
 def clustering():
@@ -235,7 +250,17 @@ def clustering():
     Función para realizar el clustering
     """
     try:
-        pass
+        dictionary = Dictionary(data['text'])
+        dictionary.filter_extremes(no_below=20, no_above=0.5)
+        
+        corpus = dictionary.id2token
+        
+        lda = LdaModel(corpus=corpus, id2word=dictionary, num_topics=args.lda["num_topics"], chunksize=args.lda["chunksize"], passes=args.lda["passes"], iterations=args.lda["iterations"], random_state=42)
+        
+        top_topics=lda.top_topics(corpus)
+        
+        from pprint import pprint
+        pprint(top_topics)
     except Exception as e:
         print(Fore.RED+"Error al realizar el clustering"+Fore.RESET)
         print(e)

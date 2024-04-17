@@ -9,7 +9,7 @@
         "sampling": "undersampling"
     },
     "lda":{
-        "num_topics" : [10],
+        "num_topics" : [3, 5, 10],
         "chunksize" : [2000],
         "passes" : [20],
         "iterations" : [400]

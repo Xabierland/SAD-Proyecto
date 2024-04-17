@@ -264,29 +264,34 @@ def clustering():
         temp = dictionary[0]
         id2word = dictionary.id2token
         
+        # Perform LDA
         avg_topic_coherence = 0
         best_avg_topic_coherence = 0
         top_topics = []
         best_top_topics = []
-        # Perform LDA
-        for num_topic in args.lda["num_topics"]:
-            for chunksize in args.lda["chunksize"]:
-                for passes in args.lda["passes"]:
-                    for iterations in args.lda["iterations"]:
-                        lda = LdaModel(corpus=corpus,
-                                    id2word=id2word,
-                                    chunksize=chunksize,
-                                    alpha='auto',
-                                    eta='auto',
-                                    iterations=int(iterations),
-                                    num_topics=int(num_topic),
-                                    passes=int(passes),
-                                    random_state=42)
-                        top_topics=lda.top_topics(corpus)
-                        avg_topic_coherence = sum([t[1] for t in top_topics]) / args.lda["num_topics"]
-                        if int(avg_topic_coherence) < int(best_avg_topic_coherence):
-                            best_top_topics = top_topics
-                            best_avg_topic_coherence = avg_topic_coherence
+        
+        with tqdm(total=len(args.lda["num_topics"]) * len(args.lda["chunksize"]) * len(args.lda["passes"]) * len(args.lda["iterations"])) as pbar:
+            for num_topic in args.lda["num_topics"]:
+                for chunksize in args.lda["chunksize"]:
+                    for passes in args.lda["passes"]:
+                        for iterations in args.lda["iterations"]:
+                            lda = LdaModel(corpus=corpus,
+                                id2word=id2word,
+                                chunksize=chunksize,
+                                alpha='auto',
+                                eta='auto',
+                                iterations=int(iterations),
+                                num_topics=int(num_topic),
+                                passes=int(passes),
+                                random_state=42)
+                            top_topics=lda.top_topics(corpus)
+                            avg_topic_coherence = sum([t[1] for t in top_topics]) / num_topic
+                            if avg_topic_coherence < best_avg_topic_coherence:
+                                best_top_topics = top_topics
+                                best_avg_topic_coherence = avg_topic_coherence
+                            pbar.update(1)
+        
+        # Imprimimos el mejor resultado
         print('Media coherencia de topico: %.4f.' % best_avg_topic_coherence)
         i=0
         for topic in best_top_topics:

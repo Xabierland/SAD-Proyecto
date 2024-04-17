@@ -371,17 +371,16 @@ def over_under_sampling():
         print(Fore.GREEN+"No se realiza oversampling o undersampling en modo test"+Fore.RESET)
 
 def drop_features():
-    """
-    Elimina las columnas especificadas del conjunto de datos.
-
-    Parámetros:
-    features (list): Lista de nombres de columnas a eliminar.
-
-    """
     global data
     try:
-        data = data.drop(columns=args.preprocessing["drop_features"])
-        print(Fore.GREEN+"Columnas eliminadas con éxito"+Fore.RESET)
+        for column in args.preprocessing["drop_features"]:
+            if column not in data.columns:
+                print(Fore.YELLOW+f"La columna {column} no existe en el dataset"+Fore.RESET)
+            else:
+                data.drop(column, axis=1, inplace=True)
+                if args.debug:
+                    print(Fore.MAGENTA+f"> Columna {column} eliminada"+Fore.RESET)
+        print(Fore.GREEN+f"Columnas eliminadas"+Fore.RESET)
     except Exception as e:
         print(Fore.RED+"Error al eliminar columnas"+Fore.RESET)
         print(e)
@@ -493,6 +492,7 @@ def mostrar_resultados(gs, x_dev, y_dev):
     """
     if args.verbose:
         print(Fore.MAGENTA+"> Mejores parametros:\n"+Fore.RESET, gs.best_params_)
+#hola ibai te quiero mucho TITAMN HOLOOOOOOOOOOO
         print(Fore.MAGENTA+"> Mejor puntuacion:\n"+Fore.RESET, gs.best_score_)
         print(Fore.MAGENTA+"> F1-score micro:\n"+Fore.RESET, calculate_fscore(y_dev, gs.predict(x_dev))[0])
         print(Fore.MAGENTA+"> F1-score macro:\n"+Fore.RESET, calculate_fscore(y_dev, gs.predict(x_dev))[1])
@@ -507,9 +507,7 @@ def naiveBayes():
     x_train, x_dev, y_train, y_dev = divide_data()
 
     """
-    # Suponiendo que 'datos' es tu conjunto de datos y 'etiquetas' son las etiquetas correspondientes
 
-    # Crear el pipeline con CountVectorizer, TfidfTransformer y MultinomialNB
     text_clf = Pipeline([
         ('vect', CountVectorizer()),
         ('tfidf', TfidfTransformer()),
@@ -523,20 +521,21 @@ def naiveBayes():
     with open('modelo.pkl', 'wb') as file:
         pickle.dump(text_clf, file)
 
-    # Realizar la predicción
     predicted = text_clf.predict(X_test)
 
-    # Calcular la precisión
     accuracy = np.mean(predicted == y_test)
     print(f'Precisión del modelo: {accuracy}') """
-    with tqdm(total=100, desc='Procesando random forest', unit='iter', leave=True) as pbar:
-        gs = GridSearchCV(MultinomialNB, cv=5, n_jobs=args.cpu, scoring=args.estimator)
+    with tqdm(total=100, desc='Procesando naive bayes', unit='iter', leave=True) as pbar:
+        gs = GridSearchCV(MultinomialNB(), args.bayes, cv=5, n_jobs=args.cpu, scoring=args.estimator)
         start_time = time.time()
-        gs.fit(x_train, y_train)
+        gs.fit(x_train, y_train)   #solo el texto y el overall
+                                    #todos y el overrall
+                                    #con los ratings menos el texto y cosas que no sean rating
+         #       print(x_train.iloc[:, 3])                            
         end_time = time.time()
         for i in range(100):
-            time.sleep(random.uniform(0.06, 0.15))  # Esperamos un tiempo aleatorio
-            pbar.update(random.random()*2)  # Actualizamos la barra con un valor aleatorio
+            time.sleep(random.uniform(0.06, 0.15)) 
+            pbar.update(random.random()*2)  
         pbar.n = 100
         pbar.last_print_n = 100
         pbar.update(0)

@@ -10,6 +10,7 @@ import json
 import argparse
 import signal
 import os
+import traceback
 import string
 import numpy as np
 import pandas as pd
@@ -28,6 +29,7 @@ from gensim.models import LdaModel
 # Imblearn - Balanceo de datos
 from imblearn.under_sampling import RandomUnderSampler
 from imblearn.over_sampling import RandomOverSampler
+
 
 # Funciones auxiliares
 
@@ -180,16 +182,17 @@ def process_text(text_feature):
     global data
     try:
         if text_feature.columns.size > 0:
-            # Minúsculas
             for col in text_feature.columns:
+                # Minúsculas
                 data[col] = data[col].apply(lambda x: x.lower())
                 # Tokenizamos
-                tokenizer = RegexpTokenizer(r'\w+')
-                data[col] = data[col].apply(lambda x: tokenizer.tokenize(x))
+                data[col] = data[col].apply(lambda x: RegexpTokenizer(r'\w+').tokenize(x))
                 # Borrar numeros
                 data[col] = data[col].apply(lambda x: [word for word in x if not word.isnumeric()])
                 # Borrar stopwords
-            
+                data[col] = data[col].apply(lambda x: [word for word in x if word not in nltk.corpus.stopwords.words('english')])
+                # Lemmatizar
+                data[col] = data[col].apply(lambda x: [WordNetLemmatizer().lemmatize(word) for word in x])
         else:
             print(Fore.YELLOW+"No hay columnas de texto en el dataset"+Fore.RESET)
     except Exception as e:
@@ -250,20 +253,50 @@ def clustering():
     Función para realizar el clustering
     """
     try:
+        # Create the dictionary
         dictionary = Dictionary(data['text'])
         dictionary.filter_extremes(no_below=20, no_above=0.5)
         
-        corpus = dictionary.id2token
+        # Create the corpus
+        corpus = [dictionary.doc2bow(doc) for doc in data['text']]
         
-        lda = LdaModel(corpus=corpus, id2word=dictionary, num_topics=args.lda["num_topics"], chunksize=args.lda["chunksize"], passes=args.lda["passes"], iterations=args.lda["iterations"], random_state=42)
+        # Create the id2word mapping
+        temp = dictionary[0]
+        id2word = dictionary.id2token
         
-        top_topics=lda.top_topics(corpus)
-        
-        from pprint import pprint
-        pprint(top_topics)
+        avg_topic_coherence = 0
+        best_avg_topic_coherence = 0
+        top_topics = []
+        best_top_topics = []
+        # Perform LDA
+        for num_topic in args.lda["num_topics"]:
+            for chunksize in args.lda["chunksize"]:
+                for passes in args.lda["passes"]:
+                    for iterations in args.lda["iterations"]:
+                        lda = LdaModel(corpus=corpus,
+                                    id2word=id2word,
+                                    chunksize=chunksize,
+                                    alpha='auto',
+                                    eta='auto',
+                                    iterations=int(iterations),
+                                    num_topics=int(num_topic),
+                                    passes=int(passes),
+                                    random_state=42)
+                        top_topics=lda.top_topics(corpus)
+                        avg_topic_coherence = sum([t[1] for t in top_topics]) / args.lda["num_topics"]
+                        if int(avg_topic_coherence) < int(best_avg_topic_coherence):
+                            best_top_topics = top_topics
+                            best_avg_topic_coherence = avg_topic_coherence
+        print('Media coherencia de topico: %.4f.' % best_avg_topic_coherence)
+        i=0
+        for topic in best_top_topics:
+            i+=1
+            print('Topic', i)
+            print(topic)
     except Exception as e:
         print(Fore.RED+"Error al realizar el clustering"+Fore.RESET)
         print(e)
+        traceback.print_exc()
         sys.exit(1)
 
 ## Main

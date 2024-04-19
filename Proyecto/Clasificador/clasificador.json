@@ -2,16 +2,16 @@
     "preprocessing": {
         "unique_category_threshold": 51,
         "drop_features": [],
-        "rating_to_cat": "rating" ,
+        "rating_to_cat": "Overall Rating" ,
         "missing_values": "impute",
         "impute_strategy": "mean",
         "scaling": "minmax",
         "text_process": "tf-idf",
-        "sampling": "oversampling"
+        "sampling": "SMOTE"
     },
 
     "bayes": {
-        "alpha": [0.1, 0.5, 1.0],
+        "alpha": [0.00000001,0.0001,0.1, 0.25, 0.5, 0.75, 1.0, 2.0],
         "fit_prior": [true, false]
         }
 }

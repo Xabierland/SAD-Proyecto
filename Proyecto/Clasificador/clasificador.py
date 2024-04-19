@@ -8,6 +8,7 @@ import random
 import sys
 import signal
 import argparse
+import unicodedata
 import pandas as pd
 import numpy as np
 import string
@@ -41,6 +42,7 @@ from tqdm import tqdm
 from sklearn.feature_extraction.text import TfidfTransformer
 from nltk.tokenize import RegexpTokenizer
 from nltk.stem import WordNetLemmatizer
+from imblearn.over_sampling import SMOTE
 
 # Funciones auxiliares
 
@@ -192,8 +194,8 @@ def process_missing_values(numerical_feature, categorical_feature):
                 data[categorical_feature.columns] = data[categorical_feature.columns].fillna(data[categorical_feature.columns].median())
                 print(Fore.GREEN+"Missing values imputados con éxito usando la mediana"+Fore.RESET)
             elif args.preprocessing["impute_strategy"] == "most_frequent":
-                data[numerical_feature.columns] = data[numerical_feature.columns].fillna(data[numerical_feature.columns].mode().iloc[0])
-                data[categorical_feature.columns] = data[categorical_feature.columns].fillna(data[categorical_feature.columns].mode().iloc[0])
+                data[numerical_feature.columns] = data[numerical_feature.columns].fillna(data[numerical_feature.columns].mode())
+                data[categorical_feature.columns] = data[categorical_feature.columns].fillna(data[categorical_feature.columns].mode())
                 print(Fore.GREEN+"Missing values imputados con éxito usando la moda"+Fore.RESET)
             else:
                 print(Fore.GREEN+"No se ha seleccionado ninguna estrategia de imputación"+Fore.RESET)
@@ -281,8 +283,8 @@ def simplify_text(text_feature):
     global data
     try:
         if text_feature.columns.size > 0:
-            # Minúsculas
             for col in text_feature.columns:
+                # Minúsculas
                 data[col] = data[col].apply(lambda x: x.lower())
                 # Tokenizamos
                 data[col] = data[col].apply(lambda x: RegexpTokenizer(r'\w+').tokenize(x))
@@ -292,8 +294,9 @@ def simplify_text(text_feature):
                 data[col] = data[col].apply(lambda x: [word for word in x if word not in nltk.corpus.stopwords.words('english')])
                 # Lemmatizar
                 data[col] = data[col].apply(lambda x: [WordNetLemmatizer().lemmatize(word) for word in x])
+                # Borrar acentos y otros caracteres especiales
+                data[col] = data[col].apply(lambda x: ''.join(patata for patata in unicodedata.normalize('NFD', ' '.join(x)) if unicodedata.category(patata) != 'Mn'))
         else:
-            print(Fore.YELLOW+"No hay columnas de texto en el dataset"+Fore.RESET)
             print(Fore.YELLOW+"No hay columnas de texto en el dataset"+Fore.RESET)
 
     except Exception as e:
@@ -316,11 +319,10 @@ def process_text(text_feature):
                 text_data = data[text_feature.columns].apply(lambda x: ' '.join(x.astype(str)), axis=1)
                 x = v.fit_transform(text_data)
                 df1 = pd.DataFrame(x.toarray(), columns=v.get_feature_names_out())
-                print(df1)
                 data.drop(text_feature.columns, axis=1, inplace=True)
                 data = pd.concat([data, df1], axis=1)
-                print(data["rating"])
-            
+                #data.drop_duplicates(keep='first', inplace=True)
+                print(Fore.GREEN+"Texto tratado con éxito usando TF-IDF"+Fore.RESET)            
             elif args.preprocessing["text_process"] == "bow":
                 bow_vecotirizer = CountVectorizer()
                 text_data = data[text_feature.columns].apply(lambda x: ' '.join(x.astype(str)), axis=1)
@@ -335,7 +337,7 @@ def process_text(text_feature):
         print(e)
         sys.exit(1)
 
-def over_under_sampling():
+def samplingMetodo():
     """
     Realiza oversampling o undersampling en los datos según la estrategia especificada en args.preprocessing["sampling"].
     
@@ -355,7 +357,10 @@ def over_under_sampling():
             if args.preprocessing["sampling"] == "oversampling":
                 ros = RandomOverSampler(sampling_strategy='minority', random_state=42)
                 x = data.drop(columns=[args.prediction])
-                y = data[args.prediction]
+                if isinstance(data[args.prediction], pd.DataFrame):
+                    y = data[args.prediction].iloc[:,0]
+                else:
+                    y = data[args.prediction]
                 x, y = ros.fit_resample(x, y)
                 x = pd.DataFrame(x, columns=data.drop(columns=[args.prediction]).columns)
                 y = pd.Series(y, name=args.prediction)
@@ -364,20 +369,36 @@ def over_under_sampling():
             elif args.preprocessing["sampling"] == "undersampling":
                 rus = RandomUnderSampler(sampling_strategy='majority', random_state=42)
                 x = data.drop(columns=[args.prediction])
-                y = data[args.prediction]
+                if isinstance(data[args.prediction], pd.DataFrame):
+                    y = data[args.prediction].iloc[:,0]
+                else:
+                    y = data[args.prediction]
                 x, y = rus.fit_resample(x, y)
                 x = pd.DataFrame(x, columns=data.drop(columns=[args.prediction]).columns)
                 y = pd.Series(y, name=args.prediction)
                 data = pd.concat([x, y], axis=1)
                 print(Fore.GREEN+"Undersampling realizado con éxito"+Fore.RESET)
+            elif args.preprocessing["sampling"].lower() == "smote":
+                sm = SMOTE(sampling_strategy='auto', random_state=42)
+                x = data.drop(columns=[args.prediction])
+                if isinstance(data[args.prediction], pd.DataFrame):
+                    y = data[args.prediction].iloc[:,0]
+                else:
+                    y = data[args.prediction]
+                x, y = sm.fit_resample(x, y)
+                x = pd.DataFrame(x, columns=data.drop(columns=[args.prediction]).columns)
+                y = pd.Series(y, name=args.prediction)
+                data = pd.concat([x, y], axis=1) 
+                print(Fore.GREEN+"SMOTE realizado con éxito"+Fore.RESET)
+                
             else:
-                print(Fore.YELLOW+"No se están realizando oversampling o undersampling"+Fore.RESET)
+                print(Fore.YELLOW+"No se están realizando oversampling, undersampling o SMOTE"+Fore.RESET)
         except Exception as e:
-            print(Fore.RED+"Error al realizar oversampling o undersampling"+Fore.RESET)
+            print(Fore.RED+"Error al realizar oversampling, undersampling o SMOTE"+Fore.RESET)
             print(e)
             sys.exit(1)
     else:
-        print(Fore.GREEN+"No se realiza oversampling o undersampling en modo test"+Fore.RESET)
+        print(Fore.GREEN+"No se realiza oversampling, undersampling o SMOTE en modo test"+Fore.RESET)
 
 def drop_features():
     global data
@@ -421,6 +442,7 @@ def preprocesar_datos():
     # Tratamos missing values
     process_missing_values(numerical_feature, categorical_feature)
 
+    convertirRating()
     # Reescalamos los datos numéricos
     reescaler(numerical_feature)
     
@@ -428,7 +450,7 @@ def preprocesar_datos():
     process_text(text_feature)
     
     # Realizamos Oversampling o Undersampling
-    over_under_sampling()
+    samplingMetodo()
 
     drop_features()
 
@@ -501,7 +523,6 @@ def mostrar_resultados(gs, x_dev, y_dev):
     """
     if args.verbose:
         print(Fore.MAGENTA+"> Mejores parametros:\n"+Fore.RESET, gs.best_params_)
-#hola ibai te quiero mucho TITAMN HOLOOOOOOOOOOO
         print(Fore.MAGENTA+"> Mejor puntuacion:\n"+Fore.RESET, gs.best_score_)
         print(Fore.MAGENTA+"> F1-score micro:\n"+Fore.RESET, calculate_fscore(y_dev, gs.predict(x_dev))[0])
         print(Fore.MAGENTA+"> F1-score macro:\n"+Fore.RESET, calculate_fscore(y_dev, gs.predict(x_dev))[1])
@@ -510,8 +531,7 @@ def mostrar_resultados(gs, x_dev, y_dev):
 
 def convertirRating():
     global data
-    data[args.preprocessing["rating_to_cat"]] = data[args.preprocessing["rating_to_cat"]].map({10: "positiva", 9: "positiva", 8: "positiva", 7: "positiva", 6: "neutra", 5: "neutra", 4: "negativa", 3: "negativa", 2: "negativa", 1: "negativa", 0: "negativa"})
-    data.to_csv('output/dataConvertida.csv', index=False)
+    data[args.preprocessing["rating_to_cat"]]= data[args.preprocessing["rating_to_cat"]].map({10: "positiva", 9: "positiva", 8: "positiva", 7: "positiva", 6: "neutra", 5: "neutra", 4: "negativa", 3: "negativa", 2: "negativa", 1: "negativa", 0: "negativa"})
 def naiveBayes():
     x_train, x_dev, y_train, y_dev = divide_data()
 
@@ -537,7 +557,23 @@ def naiveBayes():
     with tqdm(total=100, desc='Procesando naive bayes', unit='iter', leave=True) as pbar:
         gs = GridSearchCV(MultinomialNB(), args.bayes, cv=5, n_jobs=args.cpu, scoring=args.estimator)
         start_time = time.time()
-        gs.fit(x_train, y_train)   #solo el texto y el overall
+        if isinstance(y_train, pd.DataFrame):
+           print(y_train.iloc[:,0])
+           gs.fit(x_train, y_train.iloc[:,0])
+        # print("hola")
+        # print("hola, que tal?")
+        # print("yo bien y tu?")
+        # print("bien tambien")
+        # print("y tu?")
+        # print("yo tambien")
+        # print("cual es el significado de la vida?")
+        # print("42")
+        # print("gracias")
+           y_dev = y_dev.iloc[:,0]
+        else:
+            print(y_train)
+            gs.fit(x_train, y_train)                 
+                                    #solo el texto y el overall
                                     #todos y el overrall
                                     #con los ratings menos el texto y cosas que no sean rating
          #       print(x_train.iloc[:, 3])                            
@@ -549,6 +585,11 @@ def naiveBayes():
         pbar.last_print_n = 100
         pbar.update(0)
     execution_time = end_time - start_time
+    
+    
+    
+    
+    data.to_csv('preprocessed_data.csv', index=False)
     print("Tiempo de ejecución:"+Fore.MAGENTA, execution_time,Fore.RESET+ "segundos")
     
     # Mostramos los resultados
@@ -626,7 +667,6 @@ if __name__ == "__main__":
     # Preprocesamos los datos
     print("\n- Preprocesando datos...")
     preprocesar_datos()
-    convertirRating()
     if args.debug:
         try:
             print("\n- Guardando datos preprocesados...")

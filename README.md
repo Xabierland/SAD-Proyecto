@@ -4,7 +4,7 @@
 ## Clasificador
 
 ### Miembros
-
+GORA ETA GORA ETA GORA ETA GORA ETA GORA ETA GORA ETA GORA ETA GORA ETA GORA ETA GORA ETA GORA ETA GORA ETA GORA ETA GORA ETA 
 - [Xabier Gabiña](https://github.com/Xabierland)
 - [Ibai Sologuestoa](https://github.com/IbaiS94)
 

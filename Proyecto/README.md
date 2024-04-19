@@ -124,17 +124,18 @@ python clustering.py -m train -f AirlinesTrain.csv -p Especie -e accuracy -c 4 -
 {
     "preprocessing": {
         "unique_category_threshold": 51,
-        "drop_features": [],
-        "missing_values": "impute",
-        "impute_strategy": "mean",
+        "drop_features": ["Name", "Airline", "Verified", "Review Date", "Type of Traveller", "Month Flown", "Route", "Class", "Seat Comfort","Staff Service","Food & Beverages", "Inflight Entertainment", "Value For Money", "Overall Rating", "Recommended"],
+        "missing_values": "drop",
+        "impute_strategy": "",
         "scaling": "standard",
         "text_process": "tf-idf",
         "sampling": "undersampling"
     },
-    "lda": {
-        "covariance_estimator": ["svd"],
-        "n_components": [10],
-        "shrinkage": ["auto"]
+    "lda":{
+        "num_topics" : [3, 5, 10],
+        "chunksize" : [2000],
+        "passes" : [20],
+        "iterations" : [400]
     }
 }
 ```

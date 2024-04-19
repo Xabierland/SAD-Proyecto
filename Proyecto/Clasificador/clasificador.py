@@ -39,8 +39,6 @@ from imblearn.under_sampling import RandomUnderSampler
 from imblearn.over_sampling import RandomOverSampler
 from tqdm import tqdm
 from sklearn.feature_extraction.text import TfidfTransformer
-from nltk.tokenize import RegexpTokenizer
-from nltk.stem import WordNetLemmatizer
 
 # Funciones auxiliares
 
@@ -281,25 +279,17 @@ def simplify_text(text_feature):
     global data
     try:
         if text_feature.columns.size > 0:
-            # Minúsculas
+            stop_words = set(stopwords.words('english'))
+            stemmer = PorterStemmer()
             for col in text_feature.columns:
-                data[col] = data[col].apply(lambda x: x.lower())
-                # Tokenizamos
-                data[col] = data[col].apply(lambda x: RegexpTokenizer(r'\w+').tokenize(x))
-                # Borrar numeros
-                data[col] = data[col].apply(lambda x: [word for word in x if not word.isnumeric()])
-                # Borrar stopwords
-                data[col] = data[col].apply(lambda x: [word for word in x if word not in nltk.corpus.stopwords.words('english')])
-                # Lemmatizar
-                data[col] = data[col].apply(lambda x: [WordNetLemmatizer().lemmatize(word) for word in x])
+                data[col] = data[col].apply(lambda x: ' '.join(sorted([stemmer.stem(word) for word in word_tokenize(x.lower()) if word not in stop_words and word not in string.punctuation])))
+            print(Fore.GREEN+"Texto simplificado con éxito"+Fore.RESET)
         else:
-            print(Fore.YELLOW+"No hay columnas de texto en el dataset"+Fore.RESET)
-            print(Fore.YELLOW+"No hay columnas de texto en el dataset"+Fore.RESET)
-
+            print(Fore.YELLOW+"No se han encontrado columnas de texto a simplificar"+Fore.RESET)
     except Exception as e:
-               print(Fore.RED+"Error al simplificar el texto"+Fore.RESET)
-               print(e)
-               sys.exit(1)
+        print(Fore.RED+"Error al simplificar el texto"+Fore.RESET)
+        print(e)
+        sys.exit(1)
 
 def process_text(text_feature):
     """
@@ -308,21 +298,18 @@ def process_text(text_feature):
     Parámetros:
     text_feature (pandas.DataFrame): Un DataFrame que contiene las características de texto a procesar.
 
-
     """
     global data
     try:
         if text_feature.columns.size > 0:
-            if args.preprocessing["text_process"] == "tf-idf":   
-                v = TfidfVectorizer()
-                text_data = data[text_feature.columns].apply(lambda x: ' '.join(x.astype(str)), axis=1)
-                x = v.fit_transform(text_data)
-                df1 = pd.DataFrame(x.toarray(), columns=v.get_feature_names_out())
-                print(df1)
-                data.drop(text_feature.columns, axis=1, inplace=True)
-                data = pd.concat([data, df1], axis=1)
-                print(data["rating"])
-            
+            if args.preprocessing["text_process"] == "tf-idf":               
+               tfidf_vectorizer = TfidfVectorizer()
+               text_data = data[text_feature.columns].apply(lambda x: ' '.join(x.astype(str)), axis=1)
+               tfidf_matrix = tfidf_vectorizer.fit_transform(text_data)
+               text_features_df = pd.DataFrame(tfidf_matrix.toarray(), columns=tfidf_vectorizer.get_feature_names_out())
+               data = pd.concat([data, text_features_df], axis=1)
+               data.drop(text_feature.columns, axis=1, inplace=True)
+               print(Fore.GREEN+"Texto tratado con éxito usando TF-IDF"+Fore.RESET)
             elif args.preprocessing["text_process"] == "bow":
                 bow_vecotirizer = CountVectorizer()
                 text_data = data[text_feature.columns].apply(lambda x: ' '.join(x.astype(str)), axis=1)
@@ -332,6 +319,8 @@ def process_text(text_feature):
                 print(Fore.GREEN+"Texto tratado con éxito usando BOW"+Fore.RESET)
             else:
                 print(Fore.YELLOW+"No se están tratando los textos"+Fore.RESET)
+        else:
+            print(Fore.YELLOW+"No se han encontrado columnas de texto a procesar"+Fore.RESET)
     except Exception as e:
         print(Fore.RED+"Error al tratar el texto"+Fore.RESET)
         print(e)

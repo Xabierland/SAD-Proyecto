@@ -88,6 +88,12 @@ def load_data(file):
     try:
         data = pd.read_csv(file, encoding='utf-8')
         print(Fore.GREEN+"Datos cargados con éxito"+Fore.RESET)
+        try:
+            # Renombramos la columna a predecir para evitar problemas con el procesado de texto
+            data.rename(columns={args.prediction: "ColumnaAPredecir:"+args.prediction}, inplace=True)
+            args.prediction = "ColumnaAPredecir:"+args.prediction
+        except Exception as e:
+            print(Fore.RED+"Surgio un problema al renombrar la columna a predecir"+Fore.RESET)
         return data
     except Exception as e:
         print(Fore.RED+"Error al cargar los datos"+Fore.RESET)

@@ -11,13 +11,15 @@ import argparse
 import unicodedata
 import pandas as pd
 import numpy as np
-import string
 import pickle
 import time
 import json
 import csv
 import os
+# Colorama
 from colorama import Fore
+# Tqdm
+from tqdm import tqdm
 # Sklearn
 from sklearn.calibration import LabelEncoder
 from sklearn.metrics import f1_score, confusion_matrix, classification_report
@@ -32,16 +34,11 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import LabelEncoder
 # Nltk
 import nltk
-from nltk.corpus import stopwords
-from nltk.stem import PorterStemmer
-from nltk.tokenize import word_tokenize
+from nltk.stem import WordNetLemmatizer
+from nltk.tokenize import RegexpTokenizer
 # Imblearn
 from imblearn.under_sampling import RandomUnderSampler
 from imblearn.over_sampling import RandomOverSampler
-from tqdm import tqdm
-from sklearn.feature_extraction.text import TfidfTransformer
-from nltk.tokenize import RegexpTokenizer
-from nltk.stem import WordNetLemmatizer
 from imblearn.over_sampling import SMOTE
 
 # Funciones auxiliares
@@ -62,6 +59,7 @@ def parse_args():
     parse = argparse.ArgumentParser(description="Practica de algoritmos de clasificación de datos.")
     parse.add_argument("-m", "--mode", help="Modo de ejecución (train o test)", required=True)
     parse.add_argument("-f", "--file", help="Fichero csv (/Path_to_file)", required=True)
+    parse.add_argument("-a", "--algorithm", help="Algoritmo a utilizar (kNN, decision_tree, random_forest, naive_bayes)", required=True)
     parse.add_argument("-p", "--prediction", help="Columna a predecir (Nombre de la columna)", required=True)
     parse.add_argument("-e", "--estimator", help="Estimador a utilizar para elegir el mejor modelo https://scikit-learn.org/stable/modules/model_evaluation.html#scoring-parameter", required=False, default=None)
     parse.add_argument("-c", "--cpu", help="Número de CPUs a utilizar [-1 para usar todos]", required=False, default=-1, type=int)
@@ -286,16 +284,28 @@ def simplify_text(text_feature):
             for col in text_feature.columns:
                 # Minúsculas
                 data[col] = data[col].apply(lambda x: x.lower())
+                if args.debug:
+                    print(Fore.MAGENTA+f"> Columna {col} en minúsculas"+Fore.RESET)
                 # Tokenizamos
                 data[col] = data[col].apply(lambda x: RegexpTokenizer(r'\w+').tokenize(x))
+                if args.debug:
+                    print(Fore.MAGENTA+f"> Columna {col} tokenizada"+Fore.RESET)
                 # Borrar numeros
                 data[col] = data[col].apply(lambda x: [word for word in x if not word.isnumeric()])
+                if args.debug:
+                    print(Fore.MAGENTA+f"> Columna {col} sin números"+Fore.RESET)
                 # Borrar stopwords
                 data[col] = data[col].apply(lambda x: [word for word in x if word not in nltk.corpus.stopwords.words('english')])
+                if args.debug:
+                    print(Fore.MAGENTA+f"> Columna {col} sin stopwords"+Fore.RESET)
                 # Lemmatizar
                 data[col] = data[col].apply(lambda x: [WordNetLemmatizer().lemmatize(word) for word in x])
-                # Borrar acentos y otros caracteres especiales
+                if args.debug:
+                    print(Fore.MAGENTA+f"> Columna {col} lemmatizada"+Fore.RESET)
+                # Borrar caracteres especiales
                 data[col] = data[col].apply(lambda x: ''.join(patata for patata in unicodedata.normalize('NFD', ' '.join(x)) if unicodedata.category(patata) != 'Mn'))
+                if args.debug:
+                    print(Fore.MAGENTA+f"> Columna {col} sin caracteres especiales"+Fore.RESET)
         else:
             print(Fore.YELLOW+"No hay columnas de texto en el dataset"+Fore.RESET)
 
@@ -357,10 +367,7 @@ def samplingMetodo():
             if args.preprocessing["sampling"] == "oversampling":
                 ros = RandomOverSampler(sampling_strategy='minority', random_state=42)
                 x = data.drop(columns=[args.prediction])
-                if isinstance(data[args.prediction], pd.DataFrame):
-                    y = data[args.prediction].iloc[:,0]
-                else:
-                    y = data[args.prediction]
+                y = data[args.prediction]
                 x, y = ros.fit_resample(x, y)
                 x = pd.DataFrame(x, columns=data.drop(columns=[args.prediction]).columns)
                 y = pd.Series(y, name=args.prediction)
@@ -369,10 +376,7 @@ def samplingMetodo():
             elif args.preprocessing["sampling"] == "undersampling":
                 rus = RandomUnderSampler(sampling_strategy='majority', random_state=42)
                 x = data.drop(columns=[args.prediction])
-                if isinstance(data[args.prediction], pd.DataFrame):
-                    y = data[args.prediction].iloc[:,0]
-                else:
-                    y = data[args.prediction]
+                y = data[args.prediction]
                 x, y = rus.fit_resample(x, y)
                 x = pd.DataFrame(x, columns=data.drop(columns=[args.prediction]).columns)
                 y = pd.Series(y, name=args.prediction)
@@ -381,16 +385,12 @@ def samplingMetodo():
             elif args.preprocessing["sampling"].lower() == "smote":
                 sm = SMOTE(sampling_strategy='auto', random_state=42)
                 x = data.drop(columns=[args.prediction])
-                if isinstance(data[args.prediction], pd.DataFrame):
-                    y = data[args.prediction].iloc[:,0]
-                else:
-                    y = data[args.prediction]
+                y = data[args.prediction]
                 x, y = sm.fit_resample(x, y)
                 x = pd.DataFrame(x, columns=data.drop(columns=[args.prediction]).columns)
                 y = pd.Series(y, name=args.prediction)
                 data = pd.concat([x, y], axis=1) 
                 print(Fore.GREEN+"SMOTE realizado con éxito"+Fore.RESET)
-                
             else:
                 print(Fore.YELLOW+"No se están realizando oversampling, undersampling o SMOTE"+Fore.RESET)
         except Exception as e:
@@ -401,20 +401,42 @@ def samplingMetodo():
         print(Fore.GREEN+"No se realiza oversampling, undersampling o SMOTE en modo test"+Fore.RESET)
 
 def drop_features():
+    """
+    Elimina las columnas especificadas en el argumento 'drop_features' del dataset global 'data'.
+
+    Si una columna no existe en el dataset, se muestra un mensaje de advertencia en color amarillo.
+    Si el argumento 'debug' está activado, se muestra un mensaje en color magenta indicando la columna eliminada.
+    Al finalizar, se muestra un mensaje en color verde indicando que las columnas han sido eliminadas.
+
+    En caso de producirse un error al eliminar las columnas, se muestra un mensaje de error en color rojo y se finaliza el programa.
+
+    Parámetros:
+    - Ninguno
+
+    Retorna:
+    - Ninguno
+    """
     global data
     try:
-        for column in args.preprocessing["drop_features"]:
-            if column not in data.columns:
-                print(Fore.YELLOW+f"La columna {column} no existe en el dataset"+Fore.RESET)
-            else:
-                data.drop(column, axis=1, inplace=True)
-                if args.debug:
-                    print(Fore.MAGENTA+f"> Columna {column} eliminada"+Fore.RESET)
-        print(Fore.GREEN+f"Columnas eliminadas"+Fore.RESET)
+        if args.preprocessing["drop_features"] != []:
+            for column in args.preprocessing["drop_features"]:
+                if column not in data.columns:
+                    print(Fore.YELLOW+f"La columna {column} no existe en el dataset"+Fore.RESET)
+                else:
+                    data.drop(column, axis=1, inplace=True)
+                    if args.debug:
+                        print(Fore.MAGENTA+f"> Columna {column} eliminada"+Fore.RESET)
+            print(Fore.GREEN+f"Columnas eliminadas"+Fore.RESET)
+        else:
+            print(Fore.YELLOW+"No se han especificado columnas a eliminar"+Fore.RESET)
     except Exception as e:
         print(Fore.RED+"Error al eliminar columnas"+Fore.RESET)
         print(e)
         sys.exit(1)
+
+def convertirRating():
+    global data
+    data[args.prediction] = data[args.prediction].apply(lambda x: "positiva" if x >= 7 else "negativa" if x <= 4 else "neutral")
 
 def preprocesar_datos():
     """
@@ -430,6 +452,9 @@ def preprocesar_datos():
     :param data: Datos a preprocesar
     :return: Datos preprocesados y divididos en train y test
     """
+    # Eliminamos columnas no necesarias
+    drop_features()
+
     # Separamos los datos por tipos
     numerical_feature, text_feature, categorical_feature = select_features()
 
@@ -442,7 +467,9 @@ def preprocesar_datos():
     # Tratamos missing values
     process_missing_values(numerical_feature, categorical_feature)
 
+    # Convertimos los ratings a categorias
     convertirRating()
+
     # Reescalamos los datos numéricos
     reescaler(numerical_feature)
     
@@ -451,8 +478,6 @@ def preprocesar_datos():
     
     # Realizamos Oversampling o Undersampling
     samplingMetodo()
-
-    drop_features()
 
     return data
 
@@ -529,54 +554,121 @@ def mostrar_resultados(gs, x_dev, y_dev):
         print(Fore.MAGENTA+"> Informe de clasificación:\n"+Fore.RESET, calculate_classification_report(y_dev, gs.predict(x_dev)))
         print(Fore.MAGENTA+"> Matriz de confusión:\n"+Fore.RESET, calculate_confusion_matrix(y_dev, gs.predict(x_dev)))
 
-def convertirRating():
-    global data
-    data[args.preprocessing["rating_to_cat"]]= data[args.preprocessing["rating_to_cat"]].map({10: "positiva", 9: "positiva", 8: "positiva", 7: "positiva", 6: "neutra", 5: "neutra", 4: "negativa", 3: "negativa", 2: "negativa", 1: "negativa", 0: "negativa"})
-def naiveBayes():
+def kNN():
+    """
+    Función para implementar el algoritmo kNN.
+    Hace un barrido de hiperparametros para encontrar los parametros optimos
+
+    :param data: Conjunto de datos para realizar la clasificación.
+    :type data: pandas.DataFrame
+    :return: Tupla con la clasificación de los datos.
+    :rtype: tuple
+    """
+    # Dividimos los datos en entrenamiento y dev
+    x_train, x_dev, y_train, y_dev = divide_data()
+    
+    # Hacemos un barrido de hiperparametros
+
+    with tqdm(total=100, desc='Procesando kNN', unit='iter', leave=True) as pbar:
+        gs = GridSearchCV(KNeighborsClassifier(), args.kNN, cv=5, n_jobs=args.cpu, scoring=args.estimator)
+        start_time = time.time()
+        gs.fit(x_train, y_train)
+        end_time = time.time()
+        for i in range(100):
+            time.sleep(random.uniform(0.06, 0.15))  # Esperamos un tiempo aleatorio
+            pbar.update(random.random()*2)  # Actualizamos la barra con un valor aleatorio
+        pbar.n = 100
+        pbar.last_print_n = 100
+        pbar.update(0)
+    execution_time = end_time - start_time
+    print("Tiempo de ejecución:"+Fore.MAGENTA, execution_time,Fore.RESET+ "segundos")
+    
+    # Mostramos los resultados
+    mostrar_resultados(gs, x_dev, y_dev)
+    
+    # Guardamos el modelo utilizando pickle
+    save_model(gs)
+
+def decision_tree():
+    """
+    Función para implementar el algoritmo de árbol de decisión.
+
+    :param data: Conjunto de datos para realizar la clasificación.
+    :type data: pandas.DataFrame
+    :return: Tupla con la clasificación de los datos.
+    :rtype: tuple
+    """
+    # Dividimos los datos en entrenamiento y dev
+    x_train, x_dev, y_train, y_dev = divide_data()
+    
+    # Hacemos un barrido de hiperparametros
+    with tqdm(total=100, desc='Procesando decision tree', unit='iter', leave=True) as pbar:
+        gs = GridSearchCV(DecisionTreeClassifier(), args.decision_tree, cv=5, n_jobs=args.cpu, scoring=args.estimator)
+        start_time = time.time()
+        gs.fit(x_train, y_train)
+        end_time = time.time()
+        for i in range(100):
+            time.sleep(random.uniform(0.06, 0.15))  # Esperamos un tiempo aleatorio
+            pbar.update(random.random()*2)  # Actualizamos la barra con un valor aleatorio
+        pbar.n = 100
+        pbar.last_print_n = 100
+        pbar.update(0)
+    execution_time = end_time - start_time
+    print("Tiempo de ejecución:"+Fore.MAGENTA, execution_time,Fore.RESET+ "segundos")
+    
+    # Mostramos los resultados
+    mostrar_resultados(gs, x_dev, y_dev)
+    
+    # Guardamos el modelo utilizando pickle
+    save_model(gs)
+    
+def random_forest():
+    """
+    Función que entrena un modelo de Random Forest utilizando GridSearchCV para encontrar los mejores hiperparámetros.
+    Divide los datos en entrenamiento y desarrollo, realiza la búsqueda de hiperparámetros, guarda el modelo entrenado
+    utilizando pickle y muestra los resultados utilizando los datos de desarrollo.
+
+    Parámetros:
+        Ninguno
+
+    Retorna:
+        Ninguno
+    """
+    
+    # Dividimos los datos en entrenamiento y dev
+    x_train, x_dev, y_train, y_dev = divide_data()
+    
+    # Hacemos un barrido de hiperparametros
+    with tqdm(total=100, desc='Procesando random forest', unit='iter', leave=True) as pbar:
+        gs = GridSearchCV(RandomForestClassifier(), args.random_forest, cv=5, n_jobs=args.cpu, scoring=args.estimator)
+        start_time = time.time()
+        gs.fit(x_train, y_train)
+        end_time = time.time()
+        for i in range(100):
+            time.sleep(random.uniform(0.06, 0.15))  # Esperamos un tiempo aleatorio
+            pbar.update(random.random()*2)  # Actualizamos la barra con un valor aleatorio
+        pbar.n = 100
+        pbar.last_print_n = 100
+        pbar.update(0)
+    execution_time = end_time - start_time
+    print("Tiempo de ejecución:"+Fore.MAGENTA, execution_time,Fore.RESET+ "segundos")
+    
+    # Mostramos los resultados
+    mostrar_resultados(gs, x_dev, y_dev)
+    
+    # Guardamos el modelo utilizando pickle
+    save_model(gs)
+
+def naive_bayes():
+
+    # Dividimos los datos en entrenamiento y dev
     x_train, x_dev, y_train, y_dev = divide_data()
 
-    """
-
-    text_clf = Pipeline([
-        ('vect', CountVectorizer()),
-        ('tfidf', TfidfTransformer()),
-        ('clf', MultinomialNB())
-    ])
-
-    # Entrenar el modelo
-    text_clf.fit(X_train, y_train)
-
-    # Guardar el modelo con pickle
-    with open('modelo.pkl', 'wb') as file:
-        pickle.dump(text_clf, file)
-
-    predicted = text_clf.predict(X_test)
-
-    accuracy = np.mean(predicted == y_test)
-    print(f'Precisión del modelo: {accuracy}') """
+    # Hacemos un barrido de hiperparametros
     with tqdm(total=100, desc='Procesando naive bayes', unit='iter', leave=True) as pbar:
-        gs = GridSearchCV(MultinomialNB(), args.bayes, cv=5, n_jobs=args.cpu, scoring=args.estimator)
+        gs = GridSearchCV(MultinomialNB(), args.naive_bayes, cv=5, n_jobs=args.cpu, scoring=args.estimator)
         start_time = time.time()
-        if isinstance(y_train, pd.DataFrame):
-           print(y_train.iloc[:,0])
-           gs.fit(x_train, y_train.iloc[:,0])
-        # print("hola")
-        # print("hola, que tal?")
-        # print("yo bien y tu?")
-        # print("bien tambien")
-        # print("y tu?")
-        # print("yo tambien")
-        # print("cual es el significado de la vida?")
-        # print("42")
-        # print("gracias")
-           y_dev = y_dev.iloc[:,0]
-        else:
-            print(y_train)
-            gs.fit(x_train, y_train)                 
-                                    #solo el texto y el overall
-                                    #todos y el overrall
-                                    #con los ratings menos el texto y cosas que no sean rating
-         #       print(x_train.iloc[:, 3])                            
+        gs.fit(x_train, y_train)
         end_time = time.time()
         for i in range(100):
             time.sleep(random.uniform(0.06, 0.15)) 
@@ -585,11 +677,6 @@ def naiveBayes():
         pbar.last_print_n = 100
         pbar.update(0)
     execution_time = end_time - start_time
-    
-    
-    
-    
-    data.to_csv('preprocessed_data.csv', index=False)
     print("Tiempo de ejecución:"+Fore.MAGENTA, execution_time,Fore.RESET+ "segundos")
     
     # Mostramos los resultados
@@ -597,6 +684,8 @@ def naiveBayes():
     
     # Guardamos el modelo utilizando pickle
     save_model(gs)
+
+# Funciones para predecir con un modelo
 
 def load_model():
     """
@@ -675,14 +764,37 @@ if __name__ == "__main__":
         except Exception as e:
             print(Fore.RED+"Error al guardar los datos preprocesados"+Fore.RESET)
     if args.mode == "train":
-        # Ejecutamos el algoritmo seleccionado
-        print("\n- Ejecutando algoritmo...")
-        try:    
-                naiveBayes()
+        if args.algorithm == "kNN":
+            try:
+                kNN()
+                print(Fore.GREEN+"Algoritmo kNN ejecutado con éxito"+Fore.RESET)
+                sys.exit(0)
+            except Exception as e:
+                print(e)
+        elif args.algorithm == "decision_tree":
+            try:
+                decision_tree()
+                print(Fore.GREEN+"Algoritmo árbol de decisión ejecutado con éxito"+Fore.RESET)
+                sys.exit(0)
+            except Exception as e:
+                print(e)
+        elif args.algorithm == "random_forest":
+            try:
+                random_forest()
+                print(Fore.GREEN+"Algoritmo random forest ejecutado con éxito"+Fore.RESET)
+                sys.exit(0)
+            except Exception as e:
+                print(e)
+        elif args.algorithm == "naive_bayes":
+            try:
+                naive_bayes()
                 print(Fore.GREEN+"Algoritmo naive bayes ejecutado con éxito"+Fore.RESET)
                 sys.exit(0)
-        except Exception as e:
+            except Exception as e:
                 print(e)
+        else:
+            print(Fore.RED+"Algoritmo no soportado"+Fore.RESET)
+            sys.exit(1)
     elif args.mode == "test":
         # Cargamos el modelo
         print("\n- Cargando modelo...")

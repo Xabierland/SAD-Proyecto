@@ -12,6 +12,7 @@ import signal
 import os
 import traceback
 import string
+import unicodedata
 import numpy as np
 import pandas as pd
 # Colorama - Colores en la terminal
@@ -127,7 +128,7 @@ def select_features():
         print(e)
         sys.exit(1)
 
-def process_missing_values(numerical_feature, categorical_feature):
+def process_missing_values(numerical_feature, categorical_feature, text_feature):
     """
     Procesa los valores faltantes en los datos según la estrategia especificada en los argumentos.
 
@@ -146,6 +147,7 @@ def process_missing_values(numerical_feature, categorical_feature):
         if args.preprocessing["missing_values"] == "drop":
             data = data.dropna(subset=numerical_feature.columns)
             data = data.dropna(subset=categorical_feature.columns)
+            data = data.dropna(subset=text_feature.columns)
             print(Fore.GREEN+"Missing values eliminados con éxito"+Fore.RESET)
         elif args.preprocessing["missing_values"] == "impute":
             if args.preprocessing["impute_strategy"] == "mean":
@@ -185,14 +187,24 @@ def process_text(text_feature):
             for col in text_feature.columns:
                 # Minúsculas
                 data[col] = data[col].apply(lambda x: x.lower())
+                if args.debug:
+                    print(Fore.MAGENTA+f"> Columna {col} en minúsculas"+Fore.RESET)
                 # Tokenizamos
                 data[col] = data[col].apply(lambda x: RegexpTokenizer(r'\w+').tokenize(x))
+                if args.debug:
+                    print(Fore.MAGENTA+f"> Columna {col} tokenizada"+Fore.RESET)
                 # Borrar numeros
                 data[col] = data[col].apply(lambda x: [word for word in x if not word.isnumeric()])
+                if args.debug:
+                    print(Fore.MAGENTA+f"> Columna {col} sin números"+Fore.RESET)
                 # Borrar stopwords
                 data[col] = data[col].apply(lambda x: [word for word in x if word not in nltk.corpus.stopwords.words('english')])
+                if args.debug:
+                    print(Fore.MAGENTA+f"> Columna {col} sin stopwords"+Fore.RESET)
                 # Lemmatizar
                 data[col] = data[col].apply(lambda x: [WordNetLemmatizer().lemmatize(word) for word in x])
+                if args.debug:
+                    print(Fore.MAGENTA+f"> Columna {col} lemmatizada"+Fore.RESET)
         else:
             print(Fore.YELLOW+"No hay columnas de texto en el dataset"+Fore.RESET)
     except Exception as e:
@@ -237,6 +249,9 @@ def preprocesar_datos():
     # Separamos los datos por tipos
     numerical_feature, text_feature, categorical_feature = select_features()
     
+    # Missing values
+    process_missing_values(numerical_feature, categorical_feature, text_feature)
+
     # Simplificamos el texto
     process_text(text_feature)
     

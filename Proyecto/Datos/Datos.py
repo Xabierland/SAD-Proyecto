@@ -65,19 +65,22 @@ if __name__ == "__main__":
     # Modificaciones post-merge
     #   Existen saltos de linea en los textos de las columnas Title y Reviews, los eliminamos
     Datos["Title"] = Datos["Title"].str.replace("\n","")
-    Datos["Reviews"] = Datos["Reviews"].str.replace("\n","")
+    Datos["Reviews"] = Datos["Reviews"].str.replace(r"[\n\r]+", " ")
     #   Eliminamos el caracter U+00a0 (Non-breaking space) de las columnas
     Datos["Title"] = Datos["Title"].str.replace("\u00a0","")
     Datos["Reviews"] = Datos["Reviews"].str.replace("\u00a0","")
     # Eliminamos el caracter U+2013 y lo reemplazamos por un guion
     Datos["Title"] = Datos["Title"].str.replace("\u2013","-")
     Datos["Reviews"] = Datos["Reviews"].str.replace("\u2013","-")
+    # Buscamos dos * juntos con cualquier caracter por detras y espacio por delante
+    Datos["Reviews"] = Datos["Reviews"].str.replace("**", "")
     #   Elimina los caracteres en blanco al principio y al final de las columnas
     Datos["Title"] = Datos["Title"].str.strip()
     Datos["Reviews"] = Datos["Reviews"].str.strip()
-    #   Si encontramos ** seguidos eliminamos los espacios en blanco an rededor de ellos
-    Datos["Reviews"] = Datos["Reviews"].str.replace(" ** ","")
-
+    #   Cambiamos los valores de las columnas Verified a True y False
+    Datos["Verified"] = Datos["Verified"].replace("Verified", True)
+    Datos["Verified"] = Datos["Verified"].replace("Not Verified", False)
+    
     # Dividimos el DataFrame
     #   Datos de British Airlines
     British = Datos[Datos["Airline"] == "British Airlines"]

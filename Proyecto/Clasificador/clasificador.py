@@ -441,9 +441,10 @@ def drop_features():
         sys.exit(1)
 
 def convertirRating():
-    global data
-    data[args.prediction] = data[args.prediction].apply(lambda x: "positiva" if x >= 7 else "negativa" if x <= 4 else "neutral")
-
+    if args.preprocessing["convertirRating"] is True:
+        global data
+        data[args.prediction] = data[args.prediction].apply(lambda x: "positiva" if x >= 7 else "negativa" if x <= 4 else "neutral")
+        print(Fore.GREEN+"Columna a predecir convertida con éxito"+Fore.RESET)
 def preprocesar_datos():
     """
     Función para preprocesar los datos

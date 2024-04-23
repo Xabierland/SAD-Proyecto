@@ -220,18 +220,14 @@ def unir_columnas():
 def preprocesar_datos():
     """
     Función para preprocesar los datos
-        1. Separamos los datos por tipos (Categoriales, numéricos y textos)
-        2. Pasar los datos de categoriales a numéricos
-        3. Tratamos missing values (Eliminar y imputar)
-        4. Reescalamos los datos datos (MinMax, Normalizer, MaxAbsScaler)
-        5. Simplificamos el texto
-            5.1. Tokenizar
-            5.2. Eliminar stopwords
-            5.3. Lemmatizar
-            5.4. Ordenar alfabéticamente
-        6. Tratamos el texto (TF-IDF, BOW)
-        7. Realizamos Oversampling o Undersampling
-        8. Borrar columnas no necesarias
+        1. Borramos las columnas no necesarias
+        2. Separamos los datos por tipos (Categoriales, numéricos y textos)
+        3. Simplificamos el texto
+            3.1. Tokenizar
+            3.2. Eliminar stopwords
+            3.3. Lemmatizar
+            3.4. Ordenar alfabéticamente
+        4. Tratamos el texto (TF-IDF, BOW)
     :param data: Datos a preprocesar
     :return: Datos preprocesados
     """
@@ -250,7 +246,22 @@ def preprocesar_datos():
 ## Clustering
 def clustering():
     """
-    Función para realizar el clustering
+    Función para realizar el clustering utilizando el modelo LDA (Latent Dirichlet Allocation).
+
+    Esta función realiza el clustering de un conjunto de textos utilizando el modelo LDA. 
+    El proceso de clustering se realiza en varias etapas, donde se ajustan los parámetros 
+    del modelo LDA y se calcula la coherencia de los tópicos generados. El objetivo es 
+    encontrar la combinación de parámetros que genere los tópicos más coherentes.
+
+    Args:
+        None
+
+    Returns:
+        None
+
+    Raises:
+        Exception: Si ocurre algún error durante el proceso de clustering.
+
     """
     try:
         # Create the dictionary

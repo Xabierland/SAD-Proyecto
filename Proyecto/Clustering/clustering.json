@@ -1,7 +1,7 @@
 {
     "preprocessing": {
         "unique_category_threshold": 51,
-        "drop_features": ["Name", "Airline", "Verified", "Review Date", "Type of Traveller", "Month Flown", "Route", "Class", "Seat Comfort","Staff Service","Food & Beverages", "Inflight Entertainment", "Value For Money", "Overall Rating", "Recommended"],
+        "drop_features": ["Name", "Airline", "Verified", "Date", "Type of Traveller", "Route", "Class", "Seat Comfort","Staff Service","Food & Beverages", "Inflight Entertainment", "Value For Money", "Overall Rating"],
         "missing_values": "drop",
         "impute_strategy": "",
         "scaling": "standard",

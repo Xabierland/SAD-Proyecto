@@ -39,7 +39,8 @@ Clasificador
 ```bash
 python clasificador.py --help
 === Clasificador ===
-usage: clasificador.py [-h] -m MODE -f FILE -a ALGORITHM -p PREDICTION [-e ESTIMATOR] [-c CPU] [-v] [--debug]
+usage: clasificador.py [-h] -m MODE -f FILE -a ALGORITHM -p PREDICTION [-e ESTIMATOR] [-c CPU]
+                       [-v] [--debug]
 
 Practica de algoritmos de clasificación de datos.
 
@@ -48,21 +49,32 @@ optional arguments:
   -m MODE, --mode MODE  Modo de ejecución (train o test)
   -f FILE, --file FILE  Fichero csv (/Path_to_file)
   -a ALGORITHM, --algorithm ALGORITHM
-                        Algoritmo a ejecutar (kNN, decision_tree o random_forest)
+                        Algoritmo a utilizar (kNN, decision_tree, random_forest, naive_bayes)
   -p PREDICTION, --prediction PREDICTION
                         Columna a predecir (Nombre de la columna)
   -e ESTIMATOR, --estimator ESTIMATOR
-                        Estimador a utilizar para elegir el mejor modelo https://scikit-learn.org/stable/modules/model_evaluation.html#scoring-parameter
+                        Estimador a utilizar para elegir el mejor modelo https://scikit-
+                        learn.org/stable/modules/model_evaluation.html#scoring-parameter
   -c CPU, --cpu CPU     Número de CPUs a utilizar [-1 para usar todos]
-  -v, --verbose         Muestra las metricas por la termina
-  --debug               Modo debug [Muestra informacion extra del preprocesado y almacena el resultado del mismo en un .csv]
+  -v, --verbose         Muestra las metricas por la terminal
+  --debug               Modo debug [Muestra informacion extra del preprocesado y almacena el
+                        resultado del mismo en un .csv]
 ```
 
 Clustering
 
 ```bash
-python clustering.py --help
 === Clustering ===
+usage: clustering.py [-h] -f FILE [-v] [--debug]
+
+Practica de algoritmos de clustering de datos.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -f FILE, --file FILE  Fichero csv (/Path_to_file)
+  -v, --verbose         Muestra las metricas por la terminal
+  --debug               Modo debug [Muestra informacion extra del preprocesado y almacena el
+                        resultado del mismo en un .csv]
 ```
 
 ## Uso
@@ -72,13 +84,13 @@ python clustering.py --help
 Basico
 
 ```bash
-python clasificador.py -m train -a kNN -f AirlinesTrain.csv -p Especie
+python clasificador.py -m train -a naive_bayes -f Datos.csv -p "Overall Rating"
 ```
 
 Avanzado
 
 ```bash
-python clasificador.py -m train -a kNN -f AirlinesTrain.csv -p Especie -e accuracy -c 4 -v --debug
+python clasificador.py -m train -a naive_bayes -f Datos.csv -p "Overall Rating" -e accuracy -c 4 -v --debug
 ```
 
 ### Clustering
@@ -86,13 +98,13 @@ python clasificador.py -m train -a kNN -f AirlinesTrain.csv -p Especie -e accura
 Basico
 
 ```bash
-python clustering.py -m train -a kNN -f AirlinesTrain.csv -p Especie
+python clustering.py -f Datos.csv
 ```
 
 Avanzado
 
 ```bash
-python clustering.py -m train -f AirlinesTrain.csv -p Especie -e accuracy -c 4 -v --debug
+python clustering.py -f AirlinesTrain.csv -v --debug
 ```
 
 ## JSON
@@ -106,16 +118,41 @@ python clustering.py -m train -f AirlinesTrain.csv -p Especie -e accuracy -c 4 -
         "drop_features": [],
         "missing_values": "impute",
         "impute_strategy": "mean",
-        "scaling": "standard",
+        "scaling": "minmax",
         "text_process": "tf-idf",
-        "sampling": "undersampling"
+        "sampling": "SMOTE"
     },
-    "naive": {
-        "covariance_estimator": ["svd"],
-        "n_components": [10],
-        "shrinkage": ["auto"]
-    }
+    "kNN": {
+        "n_neighbors": [3, 4, 5, 6, 7, 8, 9, 10, 11],
+        "weights": ["uniform", "distance"],
+        "algorithm": ["auto"],
+        "leaf_size": [20, 30, 40],
+        "p": [1, 2]
+    },
+    "decision_tree": {
+        "criterion": ["gini"],
+        "max_depth": [5, 10, 20, 30],
+        "min_samples_split": [2, 5, 10],
+        "min_samples_leaf": [1, 2, 4],
+        "max_features": ["sqrt", "log2"],
+        "splitter": ["best"]
+    },
+    "random_forest": {
+        "n_estimators": [50],
+        "criterion": ["gini"],
+        "max_depth": [5, 10],
+        "min_samples_split": [2, 5, 10],
+        "min_samples_leaf": [1, 2, 4],
+        "max_features": ["sqrt", "log2"],
+        "bootstrap": [false]
+    },
+    "naive_bayes": {
+        "alpha": [0.00000001,0.0001,0.1, 0.25, 0.5, 0.75, 1.0, 2.0],
+        "fit_prior": [true, false]
+        }
 }
+
+
 ```
 
 ### Clustering

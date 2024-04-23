@@ -25,9 +25,9 @@ if __name__ == "__main__":
     #   Columnas de BritishAirways.csv
     #       - header,author,date,place,content,aircraft,traveller_type,seat_type,route,date_flown,recommended,trip_verified,rating,seat_comfort,cabin_staff_service,food_beverages,ground_service,value_for_money,entertainment
     #   Columnas de Datos.csv
-    #       - Title
-    #       - Name
-    #       - Airline
+    #       - Title - header
+    #       - Name - author
+    #       - Airline - "British Airlines"
     #       - Verified - trip_verified
     #       - Reviews - content
     #       - Type of Traveller - traveller_type
@@ -63,8 +63,45 @@ if __name__ == "__main__":
     Datos["Value For Money"] = pd.concat([Airlines["Value For Money"], British["value_for_money"]], axis=0)
     Datos["Overall Rating"] = pd.concat([Airlines["Overall Rating"], British["rating"]], axis=0)
     # Modificaciones post-merge
-    #   Borrar valores invisibles de Reviews
-    Datos["Reviews"] = Datos["Reviews"].str.replace("\n", " ")
+    #   Existen saltos de linea en los textos de las columnas Title y Reviews, los eliminamos
+    Datos["Title"] = Datos["Title"].str.replace("\n","")
+    Datos["Reviews"] = Datos["Reviews"].str.replace("\n","")
+    #   Eliminamos el caracter U+00a0 (Non-breaking space) de las columnas
+    Datos["Title"] = Datos["Title"].str.replace("\u00a0","")
+    Datos["Reviews"] = Datos["Reviews"].str.replace("\u00a0","")
+    # Eliminamos el caracter U+2013 y lo reemplazamos por un guion
+    Datos["Title"] = Datos["Title"].str.replace("\u2013","-")
+    Datos["Reviews"] = Datos["Reviews"].str.replace("\u2013","-")
+    #   Elimina los caracteres en blanco al principio y al final de las columnas
+    Datos["Title"] = Datos["Title"].str.strip()
+    Datos["Reviews"] = Datos["Reviews"].str.strip()
+    #   Si encontramos ** seguidos eliminamos los espacios en blanco an rededor de ellos
+    Datos["Reviews"] = Datos["Reviews"].str.replace(" ** ","")
+
+    # Dividimos el DataFrame
+    #   Datos de British Airlines
+    British = Datos[Datos["Airline"] == "British Airlines"]
+    #   Datos de Air France
+    AirFrance = Datos[Datos["Airline"] == "Air France"]
+    #   Dividimos los datos de British en tres, Overall Rating de 0-5, 5-7 y 7-10
+    BritishNeg = British[British["Overall Rating"] <= 5]
+    BritishNeu = British[(British["Overall Rating"] > 5) & (British["Overall Rating"] <= 7)]
+    BritishPos = British[British["Overall Rating"] > 7]
+    #   Dividimos los datos de Air France en tres, Overall Rating de 0-5, 5-7 y 7-10
+    AirFranceNeg = AirFrance[AirFrance["Overall Rating"] <= 5]
+    AirFranceNeu = AirFrance[(AirFrance["Overall Rating"] > 5) & (AirFrance["Overall Rating"] <= 7)]
+    AirFrancePos = AirFrance[AirFrance["Overall Rating"] > 7]
     
+    # Creamos la carpeta Output si no existe y dentro guardamos los CSVs
+    if not os.path.exists("Output"):
+        os.makedirs("Output")
     # Guardamos el DataFrame en un CSV
-    Datos.to_csv("Datos.csv",index=False)
+    Datos.to_csv("Output/Datos.csv", index=False)
+    British.to_csv("Output/British.csv", index=False)
+    BritishNeg.to_csv("Output/BritishNeg.csv", index=False)
+    BritishNeu.to_csv("Output/BritishNeu.csv", index=False)
+    BritishPos.to_csv("Output/BritishPos.csv", index=False)
+    AirFrance.to_csv("Output/AirFrance.csv", index=False)
+    AirFranceNeg.to_csv("Output/AirFranceNeg.csv", index=False)
+    AirFranceNeu.to_csv("Output/AirFranceNeu.csv", index=False)
+    AirFrancePos.to_csv("Output/AirFrancePos.csv", index=False)

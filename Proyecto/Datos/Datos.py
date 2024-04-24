@@ -90,6 +90,9 @@ if __name__ == "__main__":
     Datos["Verified"] = Datos["Verified"].replace("Verified", True)
     Datos["Verified"] = Datos["Verified"].replace("Not Verified", False)
     
+    #   Copia Overall Rating a Numerical Overall Rating
+    Datos["Numerical Overall Rating"] = Datos["Overall Rating"]
+    
     #   Cambiamos los valores de las columnas Rating por Pos Neu y Neg
     Datos["Overall Rating"] = Datos["Overall Rating"].apply(lambda x: "POS" if x >= 7 else "NEG" if x <= 4 else "NEU")
     
@@ -106,11 +109,18 @@ if __name__ == "__main__":
     AirFranceNeg = AirFrance[AirFrance["Overall Rating"] == "NEG"]
     AirFranceNeu = AirFrance[AirFrance["Overall Rating"] == "NEU"]
     AirFrancePos = AirFrance[AirFrance["Overall Rating"] == "POS"]
+    #   Dividimos los Datos en tres, Overall Rating de 0-5, 5-7 y 7-10
+    DatosNeg = Datos[Datos["Overall Rating"] == "NEG"]
+    DatosNeu = Datos[Datos["Overall Rating"] == "NEU"]
+    DatosPos = Datos[Datos["Overall Rating"] == "POS"]
     # Creamos la carpeta Output si no existe y dentro guardamos los CSVs
     if not os.path.exists("output"):
         os.makedirs("output")
     # Guardamos el DataFrame en un CSV
     Datos.to_csv("output/Datos.csv", index=False)
+    DatosNeg.to_csv("output/DatosNeg.csv", index=False)
+    DatosNeu.to_csv("output/DatosNeu.csv", index=False)
+    DatosPos.to_csv("output/DatosPos.csv", index=False)
     British.to_csv("output/British.csv", index=False)
     BritishNeg.to_csv("output/BritishNeg.csv", index=False)
     BritishNeu.to_csv("output/BritishNeu.csv", index=False)

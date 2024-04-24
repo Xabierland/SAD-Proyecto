@@ -63,48 +63,59 @@ if __name__ == "__main__":
     Datos["Value For Money"] = pd.concat([Airlines["Value For Money"], British["value_for_money"]], axis=0)
     Datos["Overall Rating"] = pd.concat([Airlines["Overall Rating"], British["rating"]], axis=0)
     # Modificaciones post-merge
+    
+    # Borramos filas con NA
+    Datos = Datos.dropna()
+    
     #   Existen saltos de linea en los textos de las columnas Title y Reviews, los eliminamos
-    Datos["Title"] = Datos["Title"].str.replace("\n","")
+    Datos["Title"] = Datos["Title"].str.replace(r"[\n\r]+", " ")
     Datos["Reviews"] = Datos["Reviews"].str.replace(r"[\n\r]+", " ")
+    
     #   Eliminamos el caracter U+00a0 (Non-breaking space) de las columnas
     Datos["Title"] = Datos["Title"].str.replace("\u00a0","")
     Datos["Reviews"] = Datos["Reviews"].str.replace("\u00a0","")
+    
     # Eliminamos el caracter U+2013 y lo reemplazamos por un guion
     Datos["Title"] = Datos["Title"].str.replace("\u2013","-")
     Datos["Reviews"] = Datos["Reviews"].str.replace("\u2013","-")
+    
     # Buscamos dos * juntos con cualquier caracter por detras y espacio por delante
     Datos["Reviews"] = Datos["Reviews"].str.replace("**", "")
+    
     #   Elimina los caracteres en blanco al principio y al final de las columnas
     Datos["Title"] = Datos["Title"].str.strip()
     Datos["Reviews"] = Datos["Reviews"].str.strip()
+    
     #   Cambiamos los valores de las columnas Verified a True y False
     Datos["Verified"] = Datos["Verified"].replace("Verified", True)
     Datos["Verified"] = Datos["Verified"].replace("Not Verified", False)
+    
+    #   Cambiamos los valores de las columnas Rating por Pos Neu y Neg
+    Datos["Overall Rating"] = Datos["Overall Rating"].apply(lambda x: "POS" if x >= 7 else "NEG" if x <= 4 else "NEU")
     
     # Dividimos el DataFrame
     #   Datos de British Airlines
     British = Datos[Datos["Airline"] == "British Airlines"]
     #   Datos de Air France
     AirFrance = Datos[Datos["Airline"] == "Air France"]
-    #   Dividimos los datos de British en tres, Overall Rating de 0-5, 5-7 y 7-10
-    BritishNeg = British[British["Overall Rating"] <= 5]
-    BritishNeu = British[(British["Overall Rating"] > 5) & (British["Overall Rating"] <= 7)]
-    BritishPos = British[British["Overall Rating"] > 7]
+    #   Dividimos los datos de British en tres, Overall Rating de NEG, NEU y POS
+    BritishNeg = British[British["Overall Rating"] == "NEG"]
+    BritishNeu = British[British["Overall Rating"] == "NEU"]
+    BritishPos = British[British["Overall Rating"] == "POS"]
     #   Dividimos los datos de Air France en tres, Overall Rating de 0-5, 5-7 y 7-10
-    AirFranceNeg = AirFrance[AirFrance["Overall Rating"] <= 5]
-    AirFranceNeu = AirFrance[(AirFrance["Overall Rating"] > 5) & (AirFrance["Overall Rating"] <= 7)]
-    AirFrancePos = AirFrance[AirFrance["Overall Rating"] > 7]
-    
+    AirFranceNeg = AirFrance[AirFrance["Overall Rating"] == "NEG"]
+    AirFranceNeu = AirFrance[AirFrance["Overall Rating"] == "NEU"]
+    AirFrancePos = AirFrance[AirFrance["Overall Rating"] == "POS"]
     # Creamos la carpeta Output si no existe y dentro guardamos los CSVs
-    if not os.path.exists("Output"):
-        os.makedirs("Output")
+    if not os.path.exists("output"):
+        os.makedirs("output")
     # Guardamos el DataFrame en un CSV
-    Datos.to_csv("Output/Datos.csv", index=False)
-    British.to_csv("Output/British.csv", index=False)
-    BritishNeg.to_csv("Output/BritishNeg.csv", index=False)
-    BritishNeu.to_csv("Output/BritishNeu.csv", index=False)
-    BritishPos.to_csv("Output/BritishPos.csv", index=False)
-    AirFrance.to_csv("Output/AirFrance.csv", index=False)
-    AirFranceNeg.to_csv("Output/AirFranceNeg.csv", index=False)
-    AirFranceNeu.to_csv("Output/AirFranceNeu.csv", index=False)
-    AirFrancePos.to_csv("Output/AirFrancePos.csv", index=False)
+    Datos.to_csv("output/Datos.csv", index=False)
+    British.to_csv("output/British.csv", index=False)
+    BritishNeg.to_csv("output/BritishNeg.csv", index=False)
+    BritishNeu.to_csv("output/BritishNeu.csv", index=False)
+    BritishPos.to_csv("output/BritishPos.csv", index=False)
+    AirFrance.to_csv("output/AirFrance.csv", index=False)
+    AirFranceNeg.to_csv("output/AirFranceNeg.csv", index=False)
+    AirFranceNeu.to_csv("output/AirFranceNeu.csv", index=False)
+    AirFrancePos.to_csv("output/AirFrancePos.csv", index=False)

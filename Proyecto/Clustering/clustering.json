@@ -1,7 +1,7 @@
 {
     "preprocessing": {
         "unique_category_threshold": 51,
-        "drop_features": ["Name", "Airline", "Verified", "Date", "Type of Traveller", "Route", "Class", "Seat Comfort","Staff Service","Food & Beverages", "Inflight Entertainment", "Value For Money", "Overall Rating"],
+        "drop_features": ["Name", "Airline", "Verified", "Date", "Type of Traveller", "Route", "Class", "Seat Comfort","Staff Service","Food & Beverages", "Inflight Entertainment", "Value For Money", "Overall Rating", "Numerical Overall Rating"],
         "missing_values": "drop",
         "impute_strategy": "",
         "scaling": "standard",
@@ -9,8 +9,8 @@
         "sampling": "undersampling"
     },
     "lda":{
-        "num_topics" : [3, 5, 10],
-        "chunksize" : [2000],
+        "num_topics" : [10],
+        "chunksize" : [500],
         "passes" : [20],
         "iterations" : [400]
     }

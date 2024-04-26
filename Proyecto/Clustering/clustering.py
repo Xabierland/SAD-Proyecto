@@ -31,7 +31,6 @@ from gensim.models import LdaModel
 from imblearn.under_sampling import RandomUnderSampler
 from imblearn.over_sampling import RandomOverSampler
 
-
 # Funciones auxiliares
 
 def signal_handler(sig, frame):
@@ -279,6 +278,14 @@ def clustering():
 
     """
     try:
+        # Add bigrams and trigrams to docs (only ones that appear 20 times or more).
+        bigram = Phrases(data['text'], min_count=20)
+        for idx in range(len(data['text'])):
+            for token in bigram[data['text'][idx]]:
+                if '_' in token:
+                    # Token is a bigram, add to document.
+                    data['text'][idx].append(token)
+        
         # Create the dictionary
         dictionary = Dictionary(data['text'])
         dictionary.filter_extremes(no_below=20, no_above=0.5)
@@ -313,17 +320,33 @@ def clustering():
                             top_topics=lda.top_topics(corpus)
                             avg_topic_coherence = sum([t[1] for t in top_topics]) / num_topic
                             if avg_topic_coherence < best_avg_topic_coherence:
+                                best_num_topic = num_topic
+                                best_chunksize = chunksize
+                                best_passes = passes
+                                best_iterations = iterations
                                 best_top_topics = top_topics
                                 best_avg_topic_coherence = avg_topic_coherence
                             pbar.update(1)
         
         # Imprimimos el mejor resultado
         print('Media coherencia de topico: %.4f.' % best_avg_topic_coherence)
+        print('Mejores parametros: num_topics=%d, chunksize=%d, passes=%d, iterations=%d' % (best_num_topic, best_chunksize, best_passes, best_iterations))
         i=0
         for topic in best_top_topics:
             i+=1
             print('Topic', i)
             print(topic)
+        # Guardamos los topicos
+        with open('output/topics.txt', 'w') as f:
+            f.write('Media coherencia de topico: %.4f.\n' % best_avg_topic_coherence)
+            f.write('Mejores parametros: num_topics=%d, chunksize=%d, passes=%d, iterations=%d\n' % (best_num_topic, best_chunksize, best_passes, best_iterations))
+            i=0
+            for topic in best_top_topics:
+                i+=1
+                f.write('Topic %d\n' % i)
+                f.write(str(topic)+'\n')
+        # Guardamos el modelo
+        lda.save('output/lda.model')
     except Exception as e:
         print(Fore.RED+"Error al realizar el clustering"+Fore.RESET)
         print(e)

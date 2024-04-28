@@ -1,5 +1,5 @@
 {
-    "multithreading": true,
+    "multithreading": false,
     "preprocessing": {
         "unique_category_threshold": 51,
         "drop_features": ["Name", "Airline", "Verified", "Date", "Type of Traveller", "Route", "Class", "Seat Comfort","Staff Service","Food & Beverages", "Inflight Entertainment", "Value For Money", "Overall Rating", "Numerical Overall Rating"],
@@ -10,8 +10,14 @@
         "sampling": "undersampling"
     },
     "lda":{
-        "num_topics" : [10, 20, 30, 40, 50, 60, 70, 80, 90, 100],
-        "passes" : [5, 10, 15, 20, 25, 30, 35, 40, 45, 50],
-        "iterations" : [50, 100, 150, 200, 250, 300, 350, 400, 450, 500]
+        "num_topics" : [5, 10, 15, 20],
+        "passes" : [50],
+        "iterations" : [100]
+    },
+    "nmf":{
+        "num_topics" : [5, 10, 15, 20],
+        "max_iter" : [1000],
+        "alpha" : [0.1],
+        "l1_ratio" : [0.5]
     }
 }

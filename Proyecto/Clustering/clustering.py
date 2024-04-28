@@ -11,6 +11,7 @@ import argparse
 import signal
 import os
 import traceback
+import csv
 import string
 import unicodedata
 import numpy as np
@@ -24,12 +25,13 @@ import nltk
 from nltk.tokenize import RegexpTokenizer
 from nltk.stem.wordnet import WordNetLemmatizer
 # Gensim - Preprocesado de texto y clustering con LDA de datos
-from gensim.models import Phrases, LdaModel, CoherenceModel, TfidfModel
+from gensim.models import Phrases, LdaModel, Nmf,CoherenceModel, TfidfModel, 
 from gensim.corpora import Dictionary
 # Imblearn - Balanceo de datos
 from imblearn.under_sampling import RandomUnderSampler
 from imblearn.over_sampling import RandomOverSampler
-import csv
+# Matplotlib - Graficas
+import matplotlib.pyplot as plt
 
 # Funciones auxiliares
 
@@ -258,7 +260,7 @@ def preprocesar_datos():
     unir_columnas()
 
 ## Clustering
-def clustering():
+def lda():
     """
     Función para realizar el clustering utilizando el modelo LDA (Latent Dirichlet Allocation).
 
@@ -309,12 +311,17 @@ def clustering():
         avg_topic_coherence = 0
         best_avg_topic_coherence = 0
         
+        # Valores para la grafica
+        umass_values = []
+        cv_values = []
+        num_topics_values = []
+
         with tqdm(total=len(args.lda["num_topics"]) * len(args.lda["passes"]) * len(args.lda["iterations"])) as pbar:
             with open('output/clustering_results.csv', 'w', newline='') as csvfile:
                 fieldnames = ['Num Topics', 'Passes', 'Iterations', 'Coherence']
                 writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                 writer.writeheader()
-                
+
                 for num_topic in args.lda["num_topics"]:
                     for passes in args.lda["passes"]:
                         for iterations in args.lda["iterations"]:
@@ -343,10 +350,28 @@ def clustering():
                                 best_passes = passes
                                 best_iterations = iterations
                                 best_avg_topic_coherence = avg_topic_coherence
-                            
+
+                            # Añade valor a la grafica
+                            umass_values.append(avg_topic_coherence)
+                            cv_values.append(CoherenceModel(model=lda, texts=data['text'], dictionary=dictionary, coherence='c_v').get_coherence())
+                            num_topics_values.append(num_topic)
+
                             # Actualizamos la barra de progreso
                             pbar.update(1)
+
+        # Graficamos la coherencia en función del número de tópicos
+        plt.plot(num_topics_values, umass_values)
+        plt.xlabel('Número de Tópicos')
+        plt.ylabel('Coherencia (u_mass)')
+        plt.title('Coherencia en función del número de tópicos')
+        plt.savefig('output/coherence_umass.png')
         
+        plt.plot(num_topics_values, cv_values)
+        plt.xlabel('Número de Tópicos')
+        plt.ylabel('Coherencia (c_v)')
+        plt.title('Coherencia en función del número de tópicos')
+        plt.savefig('output/coherence_cv.png')
+
         # Imprimimos el mejor resultado
         if args.verbose:
             print('Media coherencia de topico: %.4f.' % best_avg_topic_coherence)
@@ -375,50 +400,26 @@ def clustering():
         traceback.print_exc()
         sys.exit(1)
 
-def clustering_thread(dictionary, corpus, id2word, num_topic, passes, iterations, writer):
+def nmf():
     """
-    Función para realizar el clustering utilizando el modelo LDA (Latent Dirichlet Allocation) en un hilo de ejecución.
-    :param corpus: Corpus
-    :param id2word: id2word
-    :param num_topic: Número de tópicos
-    :param passes: Número de pasadas
-    :param iterations: Número de iteraciones
-    :param writer: Escritor de csv
-    :return: Modelo, número de tópicos, número de pasadas, número de iteraciones, coherencia
-    """
-    try:
-        lda = LdaModel(corpus=corpus,
-            id2word=id2word,
-            alpha='auto',
-            eta='auto',
-            iterations=int(iterations),
-            num_topics=int(num_topic),
-            passes=int(passes),
-            random_state=42)
+    Función para realizar el clustering utilizando el modelo NMF (Non-negative Matrix Factorization).
 
-        # Calculamos la coherencia de los topicos
-        avg_topic_coherence = CoherenceModel(model=lda, corpus=corpus, dictionary=dictionary, coherence='u_mass').get_coherence()
+    Esta función realiza el clustering de un conjunto de textos utilizando el modelo NMF. 
+    El proceso de clustering se realiza en varias etapas, donde se ajustan los parámetros 
+    del modelo NMF y se calcula la coherencia de los tópicos generados. El objetivo es 
+    encontrar la combinación de parámetros que genere los tópicos más coherentes.
 
-        if args.debug:
-            print('\nCoherencia %.4f.' % avg_topic_coherence)
+    Args:
+        None
 
-        # Guardamos los resultados
-        writer.writerow({'Num Topics': num_topic, 'Passes': passes, 'Iterations': iterations, 'Coherence': avg_topic_coherence})
-        
-        return lda, num_topic, passes, iterations, avg_topic_coherence
-    except Exception as e:
-        print(Fore.RED+"Error al realizar el clustering"+Fore.RESET)
-        print(e)
-        traceback.print_exc()
-        sys.exit(1)
+    Returns:
+        None
 
-def multi_clustering():
-    """
-    Función para realizar el clustering utilizando el modelo LDA (Latent Dirichlet Allocation) en varios hilos de ejecución.
+    Raises:
+        Exception: Si ocurre algún error durante el proceso de clustering.
+
     """
     try:
-        import concurrent.futures
-
         # Añadimos los bigramas si aparecen en al menos 20 documentos
         bigram = Phrases(data['text'], min_count=20)
         for idx in range(len(data['text'])):
@@ -445,33 +446,69 @@ def multi_clustering():
         # El id2word es un mapeo de IDs a palabras, se diferencia del diccionario en que el diccionario mapea palabras a IDs
         temp = dictionary[0]
         id2word = dictionary.id2token
-
         
-        with open('output/clustering_results.csv', 'w', newline='') as csvfile:
-            fieldnames = ['Num Topics', 'Passes', 'Iterations', 'Coherence']
-            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-            writer.writeheader()
+        # Perform NMF
+        avg_topic_coherence = 0
+        best_avg_topic_coherence = 0
 
-            with concurrent.futures.ThreadPoolExecutor(max_workers=32) as executor:
-                print("Cargando el thread pool...")
-                futures = []
-                for num_topic in args.lda["num_topics"]:
-                    for passes in args.lda["passes"]:
-                        for iterations in args.lda["iterations"]:
-                            futures.append(executor.submit(clustering_thread, dictionary, corpus, id2word, num_topic, passes, iterations, writer))
-                
-                print("Realizando el clustering...")
-                best_avg_topic_coherence = 0
-                with tqdm(total=len(args.lda["num_topics"]) * len(args.lda["passes"]) * len(args.lda["iterations"])) as pbar:
-                    for future in concurrent.futures.as_completed(futures):
-                        # Obtenemos el resultado
-                        result = future.result()
-                        # Escribimos el resultado
-                        writer.writerow({'Num Topics': result[1], 'Passes': result[2], 'Iterations': result[3], 'Coherence': result[4]})
-                        pbar.update(1)
-                        if result[4] < best_avg_topic_coherence:
-                            best_model, best_num_topic, best_passes, best_iterations, best_avg_topic_coherence = result
-        
+        # Valores para la grafica
+        umass_values = []
+        cv_values = []
+        num_topics_values = []
+
+        with tqdm(total=len(args.nmf["num_topics"]) * len(args.nmf["passes"]) * len(args.nmf["iterations"])) as pbar:
+            with open('output/clustering_results.csv', 'w', newline='') as csvfile:
+                fieldnames = ['Num Topics', 'Passes', 'Iterations', 'Coherence']
+                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                writer.writeheader()
+
+                for num_topic in args.nmf["num_topics"]:
+                    for passes in args.nmf["passes"]:
+                        for iterations in args.nmf["iterations"]:
+                            nmf = Nmf(corpus=corpus,
+                                id2word=id2word,
+                                num_topics=int(num_topic),
+                                passes=int(passes),
+                                random_state=42)
+
+                            # Calculamos la coherencia de los topicos
+                            avg_topic_coherence = CoherenceModel(model=nmf, corpus=corpus, dictionary=dictionary, coherence='u_mass').get_coherence()
+
+                            if args.debug:
+                                print('\nCoherencia %.4f.' % avg_topic_coherence)
+
+                            # Guardamos los resultados
+                            writer.writerow({'Num Topics': num_topic, 'Passes': passes, 'Iterations': iterations, 'Coherence': avg_topic_coherence})
+                            
+                            # Si la coherencia es mejor que la anterior, guardamos el modelo
+                            if avg_topic_coherence < best_avg_topic_coherence:
+                                best_model = nmf
+                                best_num_topic = num_topic
+                                best_passes = passes
+                                best_iterations = iterations
+                                best_avg_topic_coherence = avg_topic_coherence
+
+                            # Añade valor a la grafica
+                            umass_values.append(avg_topic_coherence)
+                            cv_values.append(CoherenceModel(model=nmf, texts=data['text'], dictionary=dictionary, coherence='c_v').get_coherence())
+                            num_topics_values.append(num_topic)
+
+                            # Actualizamos la barra de progreso
+                            pbar.update(1)
+
+        # Graficamos la coherencia en función del número de tópicos
+        plt.plot(num_topics_values, umass_values)
+        plt.xlabel('Número de Tópicos')
+        plt.ylabel('Coherencia (u_mass)')
+        plt.title('Coherencia en función del número de tópicos')
+        plt.savefig('output/coherence_umass.png')
+
+        plt.plot(num_topics_values, cv_values)
+        plt.xlabel('Número de Tópicos')
+        plt.ylabel('Coherencia (c_v)')
+        plt.title('Coherencia en función del número de tópicos')
+        plt.savefig('output/coherence_cv.png')
+
         # Imprimimos el mejor resultado
         if args.verbose:
             print('Media coherencia de topico: %.4f.' % best_avg_topic_coherence)
@@ -493,15 +530,12 @@ def multi_clustering():
                 f.write(str(topic)+'\n')
         
         # Guardamos el modelo
-        best_model.save('output/lda_model')
-
+        best_model.save('output/nmf_model')
     except Exception as e:
         print(Fore.RED+"Error al realizar el clustering"+Fore.RESET)
         print(e)
         traceback.print_exc()
         sys.exit(1)
-
-
 
 ## Main
 if __name__ == "__main__":
@@ -543,10 +577,7 @@ if __name__ == "__main__":
             print(Fore.RED+"Error al guardar los datos preprocesados"+Fore.RESET)
     print("\n- Realizando clustering...")
     try:
-        if args.multithreading:
-            multi_clustering()
-        else:
-            clustering()
+        lda()
     except Exception as e:
         print(Fore.RED+"Error al realizar el clustering"+Fore.RESET)
         print(e)

@@ -1,7 +1,7 @@
 {
     "preprocessing": {
         "unique_category_threshold": 51,
-        "drop_features": [],
+        "drop_features": ["Overall Rating"],
         "missing_values": "impute",
         "impute_strategy": "mean",
         "scaling": "minmax",

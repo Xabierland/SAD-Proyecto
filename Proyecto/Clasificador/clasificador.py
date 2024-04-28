@@ -337,7 +337,6 @@ def process_text(text_feature):
                 df1 = pd.DataFrame(x.toarray(), columns=v.get_feature_names_out())
                 data.drop(text_feature.columns, axis=1, inplace=True)
                 data = pd.concat([data, df1], axis=1)
-                #data.drop_duplicates(keep='first', inplace=True)
                 print(Fore.GREEN+"Texto tratado con éxito usando TF-IDF"+Fore.RESET)            
             elif args.preprocessing["text_process"] == "bow":
                 bow_vecotirizer = CountVectorizer()
@@ -441,6 +440,7 @@ def drop_features():
         sys.exit(1)
 
 def convertirRating():
+ if args.mode == "train":
     if args.preprocessing["convertirRating"] is True:
         global data
         data[args.prediction] = data[args.prediction].apply(lambda x: "positiva" if x >= 7 else "negativa" if x <= 4 else "neutral")
@@ -508,6 +508,7 @@ def divide_data():
     # Sacamos la columna a predecir
     y = data[args.prediction]
     x = data.drop(columns=[args.prediction])
+    x.sort_index(axis=1, inplace=True)
     
     # Dividimos los datos en entrenamiento y dev
     x_train, x_dev, y_train, y_dev = train_test_split(x, y, test_size=0.25, random_state=42)
@@ -727,6 +728,20 @@ def predict():
     """
     global data
     # Predecimos
+    print(model.feature_names_in_)
+    columnas = data.columns
+    columnasmodelo = model.feature_names_in_
+    for i in range(len(columnas)):
+            if columnas[i] not in columnasmodelo:
+                data.drop(columnas[i], axis=1, inplace=True)
+    for j in range(len(columnasmodelo)):
+            if columnasmodelo[j] not in columnas:
+                data = pd.concat([data, pd.DataFrame([0]*len(data), columns=[columnasmodelo[j]])], axis=1)
+                """for i in range(len(data)):
+                    data[columnasmodelo[j]][i] = 0""" """No se utiliza ya que en el paso anterior ya se ponen a 0"""
+    data.sort_index(axis=1, inplace=True)
+    if args.debug:
+        pd.DataFrame(model.feature_names_in_, columns=['Columnas en modelo']).to_csv('output/modelColumnas.csv', index=False)
     prediction = model.predict(data)
     
     # Añadimos la prediccion al dataframe data

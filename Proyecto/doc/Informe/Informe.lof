@@ -1,14 +1,25 @@
 \babel@toc {spanish}{}\relax 
 \addvspace {10\p@ }
 \addvspace {10\p@ }
+\contentsline {figure}{\numberline {2.1}{\ignorespaces Rating de British Airline y Air France}}{9}{figure.2.1}%
+\contentsline {figure}{\numberline {2.2}{\ignorespaces Ratring de British Airline y Air France por estado de verificacion}}{10}{figure.2.2}%
+\contentsline {figure}{\numberline {2.3}{\ignorespaces Distribucion de valoraciones}}{10}{figure.2.3}%
+\contentsline {figure}{\numberline {2.4}{\ignorespaces Valoraciones en base al tipo de vuelo}}{11}{figure.2.4}%
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {3.1}{\ignorespaces Coherencia de las valoraciones positivas de British Airline}}{14}{figure.3.1}%
-\contentsline {figure}{\numberline {3.2}{\ignorespaces Coherencia de las valoraciones neutras de British Airline primer intento}}{15}{figure.3.2}%
-\contentsline {figure}{\numberline {3.3}{\ignorespaces Coherencia de las valoraciones neutras de British Airline}}{15}{figure.3.3}%
-\contentsline {figure}{\numberline {3.4}{\ignorespaces Coherencia de las valoraciones negativas de British Airline}}{16}{figure.3.4}%
-\contentsline {figure}{\numberline {3.5}{\ignorespaces Coherencia de las valoraciones positivas de Air France primer intento}}{17}{figure.3.5}%
-\contentsline {figure}{\numberline {3.6}{\ignorespaces Coherencia de las valoraciones positivas de Air France}}{17}{figure.3.6}%
-\contentsline {figure}{\numberline {3.7}{\ignorespaces Coherencia de las valoraciones neutras de Air France primer intento}}{18}{figure.3.7}%
-\contentsline {figure}{\numberline {3.8}{\ignorespaces Coherencia de las valoraciones neutras de Air France}}{18}{figure.3.8}%
-\contentsline {figure}{\numberline {3.9}{\ignorespaces Coherencia de las valoraciones negativas de Air France}}{19}{figure.3.9}%
+\contentsline {figure}{\numberline {3.1}{\ignorespaces Resultados de la ejecucion de kNN}}{20}{figure.3.1}%
+\contentsline {figure}{\numberline {3.2}{\ignorespaces Resultados de la ejecucion de RandomForest}}{20}{figure.3.2}%
+\contentsline {figure}{\numberline {3.3}{\ignorespaces Resultados de la ejecucion de Naive Bayes}}{21}{figure.3.3}%
+\contentsline {figure}{\numberline {3.4}{\ignorespaces Resultados con undersampling}}{23}{figure.3.4}%
+\contentsline {figure}{\numberline {3.5}{\ignorespaces Resultados con oversampling}}{24}{figure.3.5}%
+\contentsline {figure}{\numberline {3.6}{\ignorespaces Resultados con smote}}{25}{figure.3.6}%
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {4.1}{\ignorespaces Coherencia de las valoraciones positivas de British Airline}}{35}{figure.4.1}%
+\contentsline {figure}{\numberline {4.2}{\ignorespaces Coherencia de las valoraciones neutras de British Airline primer intento}}{37}{figure.4.2}%
+\contentsline {figure}{\numberline {4.3}{\ignorespaces Coherencia de las valoraciones neutras de British Airline}}{37}{figure.4.3}%
+\contentsline {figure}{\numberline {4.4}{\ignorespaces Coherencia de las valoraciones negativas de British Airline}}{39}{figure.4.4}%
+\contentsline {figure}{\numberline {4.5}{\ignorespaces Coherencia de las valoraciones positivas de Air France primer intento}}{41}{figure.4.5}%
+\contentsline {figure}{\numberline {4.6}{\ignorespaces Coherencia de las valoraciones positivas de Air France}}{41}{figure.4.6}%
+\contentsline {figure}{\numberline {4.7}{\ignorespaces Coherencia de las valoraciones neutras de Air France primer intento}}{43}{figure.4.7}%
+\contentsline {figure}{\numberline {4.8}{\ignorespaces Coherencia de las valoraciones neutras de Air France}}{43}{figure.4.8}%
+\contentsline {figure}{\numberline {4.9}{\ignorespaces Coherencia de las valoraciones negativas de Air France}}{45}{figure.4.9}%
 \addvspace {10\p@ }

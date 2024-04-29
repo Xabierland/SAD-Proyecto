@@ -96,6 +96,7 @@
                 \hline
                 Overall Rating & String, Cuantitativo, Discreto & Calificacion general\\
                 \hline
+<<<<<<< Updated upstream
                 Numerical Overall Rating & Int, Cuantitativo, Discreto & Puntuacion umerica\\
                 \hline
                 \caption{Descripción de los datos}
@@ -129,6 +130,116 @@
                      Al principio de la etapa de preprocesamiento, siguiendo los tres clasificadores planteados se eliminaron las columnas que no pertenecían a cada uno o simplemente sobraban. Se eliminaron aquellas características que no aportaban información relevante o que podían introducir ruido en los modelos predictivos como la fecha de las reseñas, los nombres de los usuarios que han escrito las reseñas y también hemos optado por droppear el tipo de avión, ya que solo aparece en el british.}
                 \paragraph*{Separar los datos por tipos} {
                     Para facilitar el análisis y la aplicación de distintos métodos estadísticos y algoritmos de aprendizaje automático, se clasificaron las variables en tres categorías principales: numéricas, categóricas y de texto. Las variables \textbf{numéricas} incluyen aquellas que expresan cantidades y todo tipo de numero (en nuestros datos no hay). Las variables \textbf{categóricas} representan grupos parecidos Por último, las variables de \textbf{texto} contienen información en forma de cadenas de caracteres, las cuales requieren un procesamiento especial para su conversión y así ser utilizable en modelos predictivos. }
+=======
+                Numerical Overall Rating & Int, Cuantitativo, Discreto & Puntuacion numérica\\
+                \hline
+                \caption{Descripción de los datos}
+            \end{longtable}
+            
+        \section{Preprocesado de los datos}
+            \paragraph*{}{A continuación, se describirán los distintos preprocesados a los que han sido sometidos los datos para su correcta representación en los gráficos de Tableau}
+            \paragraph*{Formateado de fechas}{EL formato de las fechas de los datos de British Airlines (dd-mm-yyyy) para que se ajustara al formatos del resto de aerolíneas (M yyyy, siendo M el nombre del mes en inglés). En este proceso se perderá información, concretamente el día en el que se escribe la opinión, pero no usaremos esa información para la realización de ningún gráfico. El mes y el año serán suficientes.}
+            \paragraph*{Eliminación o modificación de carácteres especiales}{En campos que contienen datos de tipo texto (como lo son los campos Title y Reviews), existe la presencia de carácteres que pueden dificultar el procesado de dicho texto. Por lo tanto, los carácteres de salto de línea, U+00a0, U+2013, "**" y carácteres en blanco al principio y al final de los campos se han eliminado o sustituido. Estos cambios no afectan al resultado de los gráficos ya que no utilizaremos este tipo de datos, pero es importante que todos los departamentos del equipo partamos de los mismos datos.}
+            \paragraph*{Reestructuración de la ruta de vuelo}{Para poder hacer el map chart en Tableau, necesitaremos formatear la manera en la que se representan las rutas de vuelo de los aviones. Para esto inicialmente deberemos dividir la ruta en origen, destino y "vía", que reflejará en qué aeropuerto se hace escala. Además de esto y, aunque no se haya realizado este preproceso todavía, es probable que tengamos que homologar el nombre de los aeropuerto y transformarlos todos en sus respectivo código de tres letras (por ejemplo, Madrid sería MAD), para que Tableau pueda localizarlos en el mapa. Si esta cambio no es suficiente, puede que tengamos que introducir de alguna manera las coordenadas de dichos aeropuertos en el dataset.}
+            \paragraph*{Opiniones negativas, neutras y positivas}{Aunque el dataset no nos de esta información, es preciso para conseguir unos gráficos comunicativos clasificar las opiniones de los usuarios en negativas, neutras y positivas, para poder centrarnos en las negativas, las cuales serán introducidas en este grupo por poseer una puntuación menor a 5.} 
+
+        \section{Generación de gráficos}
+            \subsection{¿Por qué un histograma?}
+                \paragraph*{}{Un histograma es un tipo específico de gráfico que tiene como objetivo representar las características de distintos vectores de la muestra de datos. En nuestro caso, utilizaremos este tipo de gráficos para encontrar patrones de comportamiento en clientes pertenecientes a grupos concretos. Por ejemplo, podríamos ver a golpe de vista si muchos clientes que reservaron un asiento en primera clase han puesto una mala calificación en el apartado de "Comodidad de asiento". Estas conclusiones nos ayudarán a nosotros y a nuestra empresa a centrar nuestros esfuerzos en mejorar unos servicios concretos. En este caso, nuestra empresa se centraría en mejorar la comodidad de únicamente los asientos de primera clase, en vez de cambiar todos los asientos de todos los aviones, lo cual supondría un coste mucho mayor.}
+            \subsection{¿Por qué un mapa?}
+                \paragraph*{}{En nuestro caso particular, un mapa puede sernos de gran ayuda, al igual que los histogramas, a reconocer el origen de las malas reseñas y actuar con precisión consecuentemente. Nuestro map chart tendría como objetivo representar por medio de líneas las rutas que siguen los aviones de nuestra aerolínea, con el fin de dividir las opiniones de los usuarios según su ruta de vuelo. A través de esta representación, se nos brinda la oportunidad de ver representado en un mapa del globo que tan buenas o malas calificaciones reciben las distintas rutas que ofrece nuestra aerolínea. Esto nos permitirá, por ejemplo, identificar un patrón de malas reseñas hacia nuestro personal de cabina en una ruta entre dos ciudades concretas. De esta manera, podríamos tratar el problema con el staff que trabaje en esta ruta concreta directa y personalmente, en vez de dar una charla a todo el personal de cabina que posee la empresa, lo cual sería mucho más caro y, teniendo en cuenta lo poco directa e impersonal que sería dicha solución, probablemente menos efectiva.}
+            \subsection{Selección de los gráficos} 
+            \paragraph*{}{
+            Dados los datos que tenemos, hemos generado un par de gráficos que creemos que son importantes destacar para incluir en los dashboards y en la historia. Para ver claramente la diferencia de rating entre British Airways y Air France, hemos generado un gráfico que representa las notas de las valoraciones entre las dos aerolíneas, siendo la línea roja Air France y la línea verde British Airways:
+            }
+
+            \begin{figure}[H]
+                \centering
+                \includegraphics[width=0.3\textwidth]{img/Guion5.png}
+                \includegraphics[width=0.5\textwidth]{img/Rating.png}
+                \caption{Rating de British Airline y Air France}
+            \end{figure}
+                                                         
+            \paragraph*{}{
+            Aquí se pueden ver claramente que las dos compañías tuvieron unas críticas muy positivas en 2015, pero rápidamente bajaron; la bajada no fue tan grande para Air France como para British Airlines. Al contrario que la empresa francesa, nosotros mejoramos un poco, pero al año siguiente, al igual que nuestra competencia, las valoraciones bajaron de nota. En 2019, nuestras valoraciones incrementaron exponencialmente, mientras que las de Air France siguieron bajando, pero ya en 2020 los franceses empezaron a tener muy buenas valoraciones mientras que nosotros no. Las conclusiones que podemos tomar de esto es que en 2019 hicimos algo muy bueno que a la gente le gustó, pero en 2020 todo se fue al garete y no estamos sabiendo recuperarnos, mientras que Air France se está sabiendo adaptar.
+            }
+            \paragraph*{}{
+            Algo que también hemos tenido en cuenta ha sido mirar si las valoraciones han sido verificadas o no, para evitar el sabotaje. Con este gráfico podemos verlo mejor, siendo el naranja las verificadas y el azul las que no:
+            }
+            \begin{figure}[H]
+                \centering
+                \includegraphics[width=0.3\textwidth]{img/Guion4.png}
+                \includegraphics[width=0.5\textwidth]{img/Verified.png}
+                \caption{Ratring de British Airline y Air France por estado de verificacion}
+            \end{figure}
+            
+
+            
+            \paragraph*{}{
+            Viendo este gráfico, podemos observar que al principio, las valoraciones no verificadas nos mostraban opiniones positivas, pero ya en 2021 ha habido una oleada de reseñas negativas, lo que nos lleva a suponer que ha habido un sabotaje.
+            }
+            \paragraph*{}{
+            Para ver más en resumen la cantidad de valoraciones negativas, medias y positivas, tenemos este gráfico resumen, siendo los rojos las críticas negativas, los naranjas las neutras y las verdes las positivas:
+            }
+            \begin{figure}[H]
+                \centering
+                \includegraphics[width=0.3\textwidth]{img/Guion2.png}
+                \includegraphics[width=0.5\textwidth]{img/Quesitos.png}
+                \caption{Distribucion de valoraciones}
+            \end{figure}
+            
+            \paragraph*{}{
+            Aquí claramente podemos ver que tenemos peores críticas que nuestra competencia.
+            }
+            \paragraph*{}{
+            Por último, tenemos un gráfico para ver las puntuaciones según las clases de vuelo:
+            }
+            \begin{figure}[H]
+                \centering
+                \includegraphics[width=0.3\textwidth]{img/Guion.png}
+                \includegraphics[width=0.5\textwidth]{img/Lineas.png}
+                \caption{Valoraciones en base al tipo de vuelo}
+            \end{figure}
+
+            \paragraph*{}{
+            Viendo esto, tenemos que mejorar sin duda la primera clase ya que las ultimas reviews esta siedo muy malas y por ultimo tendriamos que hacer cambios generales ya que todas las clases estan obteiendo malas criticas.
+            }
+    \chapter{Datos para clasificación: Análisis, Preproceso y Experimentación}
+        \section{Datos}
+            \subsection{División entre Train, Dev y Test}
+                \paragraph*{Separación de Datos}{
+                    Se ha separado los datos en Train y Dev en el programa con un split del 25\%. Esto asegura que tengamos suficientes datos para entrenar el modelo mientras reservamos una porción para la validación durante el desarrollo.
+                }
+                \paragraph*{Conjunto de Test}{
+                    El conjunto de Test no se ha utilizado ya que no disponemos de el.
+                }
+            \subsection{Distribución de las clases en cada conjunto}
+                \begin{longtable}{|c|c|c|}
+                    \hline
+                    \textbf{Conjunto De Datos} & \textbf{\% de instancias}& \textbf{Num. de instancias}  \\ \hline
+                    Train & {75\%} & {6475}\\ 
+                    \hline
+                    Dev & {25\%} & {2158}\\ 
+                    \hline
+                    \caption{División Train y Dev}
+                \end{longtable}
+            \subsection{Distribución de las clases en cada conjunto}
+                \begin{longtable}{|c|c|c|c|}
+                \hline
+                \textbf{Conjunto De Datos} & \textbf{Clase Neg} & \textbf{Clase Neutra}  & \textbf{Clase Pos.} \\ 
+                \hline
+                Train & {2891} & {601} & {2975}\\ 
+                \hline
+                Dev & {964} & {201} & {992}\\ 
+                \hline
+                \caption{Distribución Train y Dev}
+                \end{longtable}
+            \clearpage\subsection{Descripción del preproceso} {
+                \paragraph*{Droppear los datos} {
+                     Al principio de la etapa de preprocesamiento, siguiendo los tres clasificadores planteados se eliminaron las columnas que no pertenecían a cada uno o simplemente sobraban. Se eliminaron aquellas características que no aportaban información relevante o que podían introducir ruido en los modelos predictivos como la fecha de las reseñas, los nombres de los usuarios que han escrito las reseñas y también hemos optado por droppear el tipo de avión, ya que solo aparece en el british.}
+                \paragraph*{Separar los datos por tipos} {
+                    Para facilitar el análisis y la aplicación de distintos métodos estadísticos y algoritmos de aprendizaje automático, se clasificaron las variables en tres categorías principales: numéricas, categóricas y de texto. Las variables \textbf{numéricas} incluyen aquellas que expresan cantidades y todo tipo de numero. Las variables \textbf{categóricas} representan grupos parecidos de texto que se van repitiendo y por último, las variables de \textbf{texto} contienen información en forma de cadenas de caracteres, las cuales requieren un procesamiento especial para su conversión y así ser utilizable en modelos predictivos. }
+>>>>>>> Stashed changes
                 \paragraph*{Simplificar el texto} {
                     Inicialmente, se verifica si hay columnas de texto para simplifica. Si es así, se procesara el texto de las respectivas columnas, primero se convierten todos los caracteres a minúsculas para estandarizar el texto, segundo se tokeniza el texto, es decir, se divide en palabras o tokens individuales, tercero se eliminan los números, cuarto se borran las palabras irrelevantes o stopwords en inglés, quinto se lematiza cada palabra para reducir las palabras a su raíz o forma base y finalmente, se eliminan los caracteres especiales como las diéresis que aparecen en palabras como Zürich que aunque en raras ocasiones aparecen. }
                 \paragraph*{Convertir las columnas categóricas en numéricas} {
@@ -136,6 +247,7 @@
                 \paragraph*{Procesar los missing values} { 
                     Cuando trabajamos con datos, es común encontrarnos con valores faltantes los cuales deben ser tratados para el correcto funcionamiento de nuestro modelo. 
                     Nuestras opciones son las siguientes:
+<<<<<<< Updated upstream
                    \begin{itemize}
                       \item \textbf{Eliminar valores faltantes (Drop)}  
                         
@@ -192,13 +304,150 @@
             \subsection{Descripción del Proceso de Submuestreo o Sobremuestreo}
                 \paragraph{}{Al principio probamos con undersampling, porque creíamos que había suficientes datos como para poder reducir la cantidad y que el modelo aun pudiese seguir prediciendo correctamente, pero después de testear la teoría y obtener un resultado por debajo de lo esperado \color{red} {CIFRA QUE HEMOS OBTENIDO} \color{black}, después del fiasco optamos por trabajar con oversampling, y aunque mejoro no era lo suficientemente bueno, en ese momento nos vino a la cabeza el examen de laboratorio y decidimos usar la técnica SMOTE, la cual funciona como el oversampling pero en vez de ir repitiendo datos genera datos artificiales, lo que aumenta el ruido en nuestro en nuestro modelo y mejora contra el posible overfitting aunque todavía hay que tener cuidado, al usar el método comentado obtuvimos resultados muy positivos \color{green} CIFRA POSITIVA >:( \color{black} por lo que decidimos usarlo, siendo esta nuestra mejor opción}
         \section{Algoritmos, link a la documentación y nombre de los hiperparámetros empleados}
+=======
+                \begin{itemize}
+                    \item \textbf{Eliminar valores faltantes (Drop)}  
+                    {En este metodo eliminamos las filas que contienen valores faltantes. Esto significa que si una fila tiene al menos un valor faltante en cualquiera de sus columnas, la eliminamos por completo.}
+                    \item \textbf{Imputar con la media}  
+                      {Reemplazamos los valores faltantes con la media de los valores existentes en esa columna.}
+                    \item \textbf{Imputar con la mediana}  
+                      {Este metodo es similar al anterior, pero usamos la mediana en lugar de la media.}
+                    \item \textbf{Imputar con la moda}  
+                      { Reemplazamos los valores faltantes con el valor más común en esa columna.}
+                \end{itemize}
+                \paragraph*{}{
+                    Nosotros de todas las opciones implementadas hemos optado por usar el drop, ya que para las columnas de texto imputar puede resultar difícil, además es mas rápido y con la cantidad de filas existentes no debería ser un gran problema, aun así todas las opciones anteriores están implementadas aunque puede que den problemas con los textos.
+                }
+                \paragraph*{Reescalar los datos} {Los metodos de reescalados de datos que estan implementados son los siguientes:}
+                \begin{itemize}
+                    \item \textbf{MinMaxScaler}   
+                        El método MinMaxScaler escala los datos llevándolos a un rango definido, generalmente entre 0 y 1. Esto se logra restando el valor mínimo de cada característica y luego dividiéndolo por el rango (valor máximo - valor mínimo). Es útil cuando los algoritmos requieren que los datos estén en un rango limitado o cuando no se puede operar con números negativos.
+                    \item \textbf{Normalizer}   
+                        El Normalizer, por otro lado, escala cada muestra, es decir, cada fila de la matriz de características, para tener una longitud unitaria. Esto se hace utilizando la norma euclidea, que es con la que funciona sklearn por defecto. Este tipo de escalado es útil cuando se quiere que las características contribuyan proporcionalmente al resultado final.
+                    \item \textbf{MaxAbsScaler}   
+                        MaxAbsScaler escala cada característica dividiendo cada valor por el valor absoluto máximo en esa característica. Esto tiene el efecto de situar los datos dentro del rango de -1 a 1
+                    \item \textbf{StandardScaler}   
+                        El StandardScaler, elimina la media y escala los datos a la varianza unitaria. Esto significa que convierte los datos en una distribución con una media de cero y una desviación estándar de uno.
+                \end{itemize}
+                \paragraph*{}{
+                    Para realizar el análisis de sentimientos, hemos utilizado Naive Bayes, por lo tanto, el reescalado no es crucial, ya que este algoritmo no se ve tan afectado como lo estaría kNN. Sin embargo, hemos aplicado el escalador MinMax para mantener los datos en valores positivos, dado que el Multinomial Naive Bayes presenta problemas con datos negativos.
+                }
+                \paragraph*{Procesar el texto}{
+                    El procesamiento de texto es un componente fundamental, ya que sin el, el texto no seria utilizable para entrenar nuestro modelo, nosotros tenemos implementados dos metodos de procesamiento de texto, los cuales son:
+                }
+                \paragraph*{TF-IDF}{
+                      el cual es una técnica que refleja la importancia de una palabra en un documento en relación con una colección de documentos, el corpus. Funciona calculando la frecuencia de una palabra en un documento TF y multiplicándola por la inversa de la frecuencia de esa palabra en el corpus IDF. Esto ayuda a ajustar el valor de las palabras comunes que aparecen en muchos documentos y son menos informativas que las palabras que aparecen en menos documentos.
+                }
+                \paragraph*{BOW}{
+                     es un modelo más simple que crea un saco de todas las palabras en los documentos, sin tener en cuenta el orden o la estructura del texto. Cada documento se representa como un vector en un espacio multidimensional donde cada dimensión corresponde a una palabra del corpus, y el valor en esa dimensión es la frecuencia de la palabra en el documento.
+                }
+                \paragraph*{}{
+                    Nosotros por obvias razones hemos optado por utilizar el TF-IDF por ser un metodo más avanzado y el que nos puede dar mejores resultados a la hora de entrenar el modelo
+                }    
+            \clearpage\subsection{Primeros resultados}
+                \paragraph*{}{
+                Teniendo en cuenta que consideramos que después de hacer lo comentado en el apartado de muestreo se selecciona SMOTE para balancear las clases, ya que sin el como hemos visto en el apartado de distribución de las clases la clase neutra no estaria muy balanceada y podría resultar en menor capacidad de predicción de la anterior.
+                }
+                \paragraph*{}{
+                Los primeros resultados que obtuvimos eran poco alentadores, probamos con diferentes algoritmos para probar sus respectivos rendimientos con nuestros datos, primero probamos a hacer kNN:
+                }
+                \begin{figure}[H]
+                    \centering
+                    \includegraphics[width=0.7\textwidth]{img/kNNSMOTE.png}
+                    \caption{Resultados de la ejecucion de kNN}
+                \end{figure}
+                \paragraph*{}{
+                   Sorpresivamente los resultados son bastante positivos, aunque el tiempo de ejecución en este caso fue mucho mayor al de Naive Bayes, siguiendo nuestras pruebas decidimos ejecutar el algoritmo random forest el cual creemos que sera aun más positivo ya que se puede considerarse más complejo que el kNN:
+                }
+                \begin{figure}[H]
+                    \centering
+                    \includegraphics[width=0.7\textwidth]{img/randomForestSMOTE.png}
+                    \caption{Resultados de la ejecucion de RandomForest}
+                \end{figure}
+                \paragraph*{}{
+                Después de ejecutar el Random Forest observamos que la 'mejora' es casi inexistente, de hecho el F1 macro y micro se ven reducidos, por lo que ahora lo unico que nos toca es ejecutar el Naive Bayes:
+                }
+                \begin{figure}[H]
+                    \centering
+                    \includegraphics[width=0.7\textwidth]{img/SMOTE.png}
+                    \caption{Resultados de la ejecucion de Naive Bayes}
+                \end{figure}
+                \paragraph*{}{
+                    En donde si que vemos una mejora bastante en todos los apartados.
+                }
+               \paragraph*{}{
+                   Hay que tener en cuenta que las 3 pruebas han sido ejecutadas con todos los datos, al hacerlo solo con el texto pierde puntuación y si es solo con los atributos aun más.
+               }
+            \clearpage\subsection{Descripción del Proceso de Submuestreo o Sobremuestreo}
+                \paragraph*{}
+                {
+                    Al principio probamos con undersampling, porque creíamos que había suficientes datos como para poder reducir la cantidad y que el modelo aun pudiese seguir prediciendo correctamente, pero después de testear la teoría y obtener un resultado por debajo de lo esperado \color{red}{Peor puntacion:}
+                }
+                \begin{figure}[H]
+                    \centering
+                    \includegraphics[width=\textwidth]{img/undersampling.png}
+                    \caption{Resultados con undersampling}
+                \end{figure}
+                \paragraph*{}{
+                    Decidimos optar por trabajar con oversampling, y aunque mejoro no era lo suficientemente bueno \color{orange}{Puntuacion media:}
+                }
+                \begin{figure}[H]
+                    \centering
+                    \includegraphics[width=\textwidth]{img/oversampling.png}
+                    \caption{Resultados con oversampling}
+                \end{figure}
+                \paragraph{}{
+                    En ese momento nos vino a la cabeza el examen de laboratorio y decidimos usar la técnica SMOTE, la cual funciona como el oversampling pero en vez de ir repitiendo datos genera datos artificiales, lo que aumenta el ruido en nuestro en nuestro modelo y mejora contra el posible overfitting aunque todavía hay que tener cuidado, al usar el método comentado obtuvimos resultados muy positivos \color{green}{Mejor puntuacion:}
+                }
+                \begin{figure}[H]
+                    \centering
+                    \includegraphics[width=\textwidth]{img/SMOTE.png}
+                    \caption{Resultados con smote}
+                \end{figure}
+                \paragraph*{}{
+                Siendo esta nuestra mejor opción, decidimos usar el metodo recien implementado para nuestro clasificador de sentimientos.
+                }
+        \clearpage\section{Algoritmos, link a la documentación y nombre de los hiperparámetros empleados}
+>>>>>>> Stashed changes
             \subsection{Experimentación: Algoritmos empleados y Breve Descripción}
-            \subsection{Resultados sobre el Development}
-                \subsubsection{Optimizando los resutlados de la clase negativa}
-                \subsubsection{Optimizando los resultados de la clase positiva}
-                \subsubsection{Sin optimizar ninguna clase en particular}
-            \subsection{Discusión sobre el Sentiment Analysis}
+                \begin{itemize}
+                    \item \textbf{Multinomial Naive Bayes}:
+                    \begin{itemize}
+                        \item Hiperparámetros: alpha: (0.00000001, 0.0001, 0.1, 0.25, 0.5, 0.75, 1.0, 2.0) y fit\_prior: (true, false)
+                        \item Link: \href{https://scikit-learn.org/stable/modules/generated/sklearn.naive_bayes.MultinomialNB.html}{Sklearn MultinomialNB}
+                    \end{itemize}
+                \end{itemize}
+                \paragraph*{}{
+                Este modelo asume una distribución multinomial para la probabilidad de diferentes resultados y es efectivo para trabajar con características que representan frecuencias de eventos. En este caso el alpha es el smoothing de laplace y es lo que se suma para que los datos no tengan un 0 como probabilidad.
+                }
+                \begin{itemize}
+                    \item \textbf{Random forest}:
+                    \begin{itemize}
+                         \item {Hiperparámetros: n\_estimators: (50), criterion: (gini), max\_depth: (5, 10), min\_samples\_split: (2, 5, 10), min\_samples\_leaf: (1, 2, 4), max\_features: (sqrt, log2), bootstrap: (false) }
+                        \item Link: \href{https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html}{Sklearn Random Forest}
+                    \end{itemize}
+                \end{itemize}
+                \paragraph*{} {
+                Esta técnica opera mediante la creación de múltiples árboles de decisión para realizar predicciones más precisas. En esencia, cada árbol de decisión en el bosque considera una muestra aleatoria de los datos y realiza una votación sobre la predicción final, reduce mucho el posible overfitting causado por los decision trees. 
+                }
+                \begin{itemize}
+                    \item\textbf{kNN}:
+                    \begin{itemize}
+                        \item {Hiperparámetros:n\_neighbors: (3, 5, 7, 9, 11), weights: (uniform, distance), algorithm: (auto), leaf\_size: (20, 30, 40), p: (1, 2)}
+                        \item Link: \href{https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsClassifier.html}{Sklearn kNN}
+                    \end{itemize} 
+                \end{itemize}
+                \paragraph*{}{
+                Este metodo se basa en clasificar un nuevo punto de datos basándose en la mayoría de votos de sus k vecinos más cercanos
+                }
             \subsection{Conclusión sobre el Sentiment Analysis}
+                \paragraph*{}{
+                    Como conclusion decir que
+                    hemos seleccionado el algoritmo Naive Bayes sobre Random Forest o KNN para el análisis de sentimientos de reseñas debido a varias razones clave. Primero, Naive Bayes es notablemente más rápido en términos de tiempo de entrenamiento y predicción, lo cual es crucial cuando se trabaja con grandes volúmenes de datos de texto. Además, a pesar de su simplicidad, Naive Bayes nos ha demostrado ser muy efectivo en tareas de clasificación de texto siendo el algoritmo que mejor resultados nos otorga. Por otro lado, modelos como Random Forest y KNN pueden ser computacionalmente costosos y menos eficientes en el manejo de datos de texto grandes.
+                }
+                \paragraph*{}{
+                    La elección de SMOTE (Synthetic Minority Oversampling Technique) sobre métodos tradicionales de oversampling o undersampling en el análisis de sentimientos de reseñas se fundamenta en su capacidad para generar muestras sintéticas que ofrecen una representación más rica y diversa de la clase minoritaria. A diferencia del oversampling, que simplemente replica instancias existentes y puede conducir a un overfitting, SMOTE crea nuevas instancias sintéticas que ayudan a los modelos de aprendizaje automático a generalizar mejor. Por otro lado, el undersampling puede resultar en la pérdida de información valiosa al eliminar instancias de otras clases. SMOTE permite preservar esta información crítica mientras equilibra las clases, lo que resulta en un modelo más robusto y preciso para el análisis de sentimientos
+                }
     \chapter{Datos para el Topic Modeling: Experimentación}
         \section{Algoritmos, link a la documentación y nombre de los hiperparámetros empleados}
             \begin{itemize}

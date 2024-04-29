@@ -96,41 +96,6 @@
                 \hline
                 Overall Rating & String, Cuantitativo, Discreto & Calificacion general\\
                 \hline
-<<<<<<< Updated upstream
-                Numerical Overall Rating & Int, Cuantitativo, Discreto & Puntuacion umerica\\
-                \hline
-                \caption{Descripción de los datos}
-            \end{longtable}
-    \chapter{Datos para clasificación: Análisis, Preproceso y Experimentación}
-        \section{Datos}
-            \subsection{División entre Train, Dev y Test}
-            \paragraph*{Separación de Datos}{
-                Se ha separado los datos en Train y Dev en el programa con un split del 25\%. Esto asegura que tengamos suficientes datos para entrenar el modelo mientras reservamos una porción para la validación durante el desarrollo.
-            }
-            \paragraph*{Conjunto de Test}{
-                El conjunto de Test no se ha utilizado durante el entrenamiento ni la validación aunque la idea seria quitar algunas filas del documento original para luego validar con ellas.
-            }
-
-            \subsection{Distribución de las clases en cada conjunto}
-            \begin{table}[H]
-                \centering
-                \begin{tabular}{|l|c|c|c|}
-                \hline
-                \multicolumn{1}{|c|}{\textbf{Conjunto De Datos}} & \textbf{Clase Neg} & \textbf{Clase Neutra}  & \textbf{Clase Pos.}  \\ \hline
-                Train & {XXX} & {69} & {XXX}\\ \hline
-                Dev & {XXX} & {XXX} & {XXX}\                  \\ \hline
-                Test Final & {XXX} & {XXX} & {XXX}\                  \\ \hline
-                \end{tabular}
-                \caption{Distribución Train, Dev y Test}
-                \label{tab:costes}
-                \end{table}
-            \paragraph*{Conjunto de Test}{ Decir cuanto de cada clase hay y porque SMOTE}
-            \subsection{Descripción del preproceso} {
-                \paragraph*{Droppear los datos} {
-                     Al principio de la etapa de preprocesamiento, siguiendo los tres clasificadores planteados se eliminaron las columnas que no pertenecían a cada uno o simplemente sobraban. Se eliminaron aquellas características que no aportaban información relevante o que podían introducir ruido en los modelos predictivos como la fecha de las reseñas, los nombres de los usuarios que han escrito las reseñas y también hemos optado por droppear el tipo de avión, ya que solo aparece en el british.}
-                \paragraph*{Separar los datos por tipos} {
-                    Para facilitar el análisis y la aplicación de distintos métodos estadísticos y algoritmos de aprendizaje automático, se clasificaron las variables en tres categorías principales: numéricas, categóricas y de texto. Las variables \textbf{numéricas} incluyen aquellas que expresan cantidades y todo tipo de numero (en nuestros datos no hay). Las variables \textbf{categóricas} representan grupos parecidos Por último, las variables de \textbf{texto} contienen información en forma de cadenas de caracteres, las cuales requieren un procesamiento especial para su conversión y así ser utilizable en modelos predictivos. }
-=======
                 Numerical Overall Rating & Int, Cuantitativo, Discreto & Puntuacion numérica\\
                 \hline
                 \caption{Descripción de los datos}
@@ -239,7 +204,6 @@
                      Al principio de la etapa de preprocesamiento, siguiendo los tres clasificadores planteados se eliminaron las columnas que no pertenecían a cada uno o simplemente sobraban. Se eliminaron aquellas características que no aportaban información relevante o que podían introducir ruido en los modelos predictivos como la fecha de las reseñas, los nombres de los usuarios que han escrito las reseñas y también hemos optado por droppear el tipo de avión, ya que solo aparece en el british.}
                 \paragraph*{Separar los datos por tipos} {
                     Para facilitar el análisis y la aplicación de distintos métodos estadísticos y algoritmos de aprendizaje automático, se clasificaron las variables en tres categorías principales: numéricas, categóricas y de texto. Las variables \textbf{numéricas} incluyen aquellas que expresan cantidades y todo tipo de numero. Las variables \textbf{categóricas} representan grupos parecidos de texto que se van repitiendo y por último, las variables de \textbf{texto} contienen información en forma de cadenas de caracteres, las cuales requieren un procesamiento especial para su conversión y así ser utilizable en modelos predictivos. }
->>>>>>> Stashed changes
                 \paragraph*{Simplificar el texto} {
                     Inicialmente, se verifica si hay columnas de texto para simplifica. Si es así, se procesara el texto de las respectivas columnas, primero se convierten todos los caracteres a minúsculas para estandarizar el texto, segundo se tokeniza el texto, es decir, se divide en palabras o tokens individuales, tercero se eliminan los números, cuarto se borran las palabras irrelevantes o stopwords en inglés, quinto se lematiza cada palabra para reducir las palabras a su raíz o forma base y finalmente, se eliminan los caracteres especiales como las diéresis que aparecen en palabras como Zürich que aunque en raras ocasiones aparecen. }
                 \paragraph*{Convertir las columnas categóricas en numéricas} {
@@ -247,64 +211,6 @@
                 \paragraph*{Procesar los missing values} { 
                     Cuando trabajamos con datos, es común encontrarnos con valores faltantes los cuales deben ser tratados para el correcto funcionamiento de nuestro modelo. 
                     Nuestras opciones son las siguientes:
-<<<<<<< Updated upstream
-                   \begin{itemize}
-                      \item \textbf{Eliminar valores faltantes (Drop)}  
-                        
-                       {En este metodo eliminamos las filas que contienen valores faltantes. Esto significa que si una fila tiene al menos un valor faltante en cualquiera de sus columnas, la eliminamos por completo.}
-                      \item \textbf{Imputar con la media}  
-                      
-                        {Reemplazamos los valores faltantes con la media de los valores existentes en esa columna.}
-                      \item \textbf{Imputar con la mediana}  
-                      
-                        {Este metodo es similar al anterior, pero usamos la mediana en lugar de la media.}
-                      \item \textbf{Imputar con la moda}  
-                      
-                       { Reemplazamos los valores faltantes con el valor más común en esa columna.}
-                   \end{itemize}
-            {Nosotros de todas las opciones implementadas hemos optado por usar el drop, ya que para las columnas de texto imputar puede resultar difícil, además es mas rápido y con la cantidad de filas existentes no debería ser un gran problema, aun así todas las opciones anteriores están implementadas aunque puede que den problemas con los textos.}}
-            \paragraph*{Reescalar los datos} {Los metodos de reescalados de datos que estan implementados son los siguientes:
-            \begin{itemize}
-            \item \textbf{MinMaxScaler}   
-            
-            El método MinMaxScaler escala los datos llevándolos a un rango definido, generalmente entre 0 y 1. Esto se logra restando el valor mínimo de cada característica y luego dividiéndolo por el rango (valor máximo - valor mínimo). Es útil cuando los algoritmos requieren que los datos estén en un rango limitado o cuando no se puede operar con numeros negativos.
-
-            \item \textbf{Normalizer}   
-            
-            El Normalizer, por otro lado, escala cada muestra, es decir, cada fila de la matriz de características, para tener una longitud unitaria. Esto se hace utilizando la norma euclidiana (L2), que es con la que funciona sklearn por defecto. Este tipo de escalado es útil cuando se quiere que las características contribuyan proporcionalmente al resultado final.
-            
-            \item \textbf{MaxAbsScaler}   
-            
-            MaxAbsScaler escala cada característica dividiendo cada valor por el valor absoluto máximo en esa característica. Esto tiene el efecto de situar los datos dentro del rango de -1 a 1
-            
-            \item \textbf{StandardScaler}   
-            
-            El StandardScaler, elimina la media y escala los datos a la varianza unitaria. Esto significa que convierte los datos en una distribución con una media de cero y una desviación estándar de uno.
-            
-            \end{itemize}
-        Para realizar el análisis de sentimientos, hemos utilizado Naive Bayes, por lo tanto, el reescalado no es crucial, ya que este algoritmo no se ve tan afectado como lo estaría kNN. Sin embargo, hemos aplicado el escalador MinMax para mantener los datos en valores positivos, dado que el Multinomial Naive Bayes presenta problemas con datos negativos.
-            }}
-          \paragraph*{Procesar el texto}   
-          {El procesamiento de texto es un componente fundamental, ya que sin el, el texto no seria utilizable para entrenar nuestro modelo, nosotros tenemos implementados dos metodos de procesamiento de texto, los cuales son:      
-            \\
-            \\
-          TF-IDF el cual es una técnica que refleja la importancia de una palabra en un documento en relación con una colección de documentos, el corpus. Funciona calculando la frecuencia de una palabra en un documento TF y multiplicándola por la inversa de la frecuencia de esa palabra en el corpus IDF. Esto ayuda a ajustar el valor de las palabras comunes que aparecen en muchos documentos y son menos informativas que las palabras que aparecen en menos documentos.      
-            \\
-            \\
-          BOW es un modelo más simple que crea un saco de todas las palabras en los documentos, sin tener en cuenta el orden o la estructura del texto. Cada documento se representa como un vector en un espacio multidimensional donde cada dimensión corresponde a una palabra del corpus, y el valor en esa dimensión es la frecuencia de la palabra en el documento. 
-            \\
-            \\
-          Nosotros por obvias razones hemos optado por utilizar el TF-IDF por ser un metodo más avanzado y el que nos puede dar mejores resultados a la hora de entrenar el modelo
-          }    
-                
-
-    
-
-            \subsection{Primeros resultados}
-            \subsection{Descripción del Proceso de Submuestreo o Sobremuestreo}
-                \paragraph{}{Al principio probamos con undersampling, porque creíamos que había suficientes datos como para poder reducir la cantidad y que el modelo aun pudiese seguir prediciendo correctamente, pero después de testear la teoría y obtener un resultado por debajo de lo esperado \color{red} {CIFRA QUE HEMOS OBTENIDO} \color{black}, después del fiasco optamos por trabajar con oversampling, y aunque mejoro no era lo suficientemente bueno, en ese momento nos vino a la cabeza el examen de laboratorio y decidimos usar la técnica SMOTE, la cual funciona como el oversampling pero en vez de ir repitiendo datos genera datos artificiales, lo que aumenta el ruido en nuestro en nuestro modelo y mejora contra el posible overfitting aunque todavía hay que tener cuidado, al usar el método comentado obtuvimos resultados muy positivos \color{green} CIFRA POSITIVA >:( \color{black} por lo que decidimos usarlo, siendo esta nuestra mejor opción}
-        \section{Algoritmos, link a la documentación y nombre de los hiperparámetros empleados}
-=======
                 \begin{itemize}
                     \item \textbf{Eliminar valores faltantes (Drop)}  
                     {En este metodo eliminamos las filas que contienen valores faltantes. Esto significa que si una fila tiene al menos un valor faltante en cualquiera de sus columnas, la eliminamos por completo.}
@@ -408,7 +314,6 @@
                 Siendo esta nuestra mejor opción, decidimos usar el metodo recien implementado para nuestro clasificador de sentimientos.
                 }
         \clearpage\section{Algoritmos, link a la documentación y nombre de los hiperparámetros empleados}
->>>>>>> Stashed changes
             \subsection{Experimentación: Algoritmos empleados y Breve Descripción}
                 \begin{itemize}
                     \item \textbf{Multinomial Naive Bayes}:

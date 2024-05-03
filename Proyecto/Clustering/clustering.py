@@ -25,7 +25,7 @@ import nltk
 from nltk.tokenize import RegexpTokenizer
 from nltk.stem.wordnet import WordNetLemmatizer
 # Gensim - Preprocesado de texto y clustering con LDA de datos
-from gensim.models import Phrases, LdaModel, Nmf,CoherenceModel, TfidfModel, 
+from gensim.models import Phrases, LdaModel, Nmf,CoherenceModel, TfidfModel
 from gensim.corpora import Dictionary
 # Imblearn - Balanceo de datos
 from imblearn.under_sampling import RandomUnderSampler
@@ -360,12 +360,14 @@ def lda():
                             pbar.update(1)
 
         # Graficamos la coherencia en función del número de tópicos
+        plt.figure()
         plt.plot(num_topics_values, umass_values)
         plt.xlabel('Número de Tópicos')
         plt.ylabel('Coherencia (u_mass)')
         plt.title('Coherencia en función del número de tópicos')
         plt.savefig('output/coherence_umass.png')
         
+        plt.figure()
         plt.plot(num_topics_values, cv_values)
         plt.xlabel('Número de Tópicos')
         plt.ylabel('Coherencia (c_v)')

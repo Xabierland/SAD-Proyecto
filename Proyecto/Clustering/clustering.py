@@ -4,7 +4,7 @@ Autor: Xabier Gabiña, Ibai Sologuestoa, Unai Garcia, Luken Bilbao
 Descripcion: Script para clustering de datos usando gensim LDA
 """
 
-# Librerias
+## Librerias
 import sys
 import json
 import argparse
@@ -33,8 +33,7 @@ from imblearn.over_sampling import RandomOverSampler
 # Matplotlib - Graficas
 import matplotlib.pyplot as plt
 
-# Funciones auxiliares
-
+## Funciones auxiliares
 def signal_handler(sig, frame):
     """
     Función para manejar la señal SIGINT (Ctrl+C)
@@ -317,7 +316,7 @@ def lda():
         num_topics_values = []
 
         with tqdm(total=len(args.lda["num_topics"]) * len(args.lda["passes"]) * len(args.lda["iterations"])) as pbar:
-            with open('output/clustering_results.csv', 'w', newline='') as csvfile:
+            with open(safe_folder+'/clustering_results.csv', 'w', newline='') as csvfile:
                 fieldnames = ['Num Topics', 'Passes', 'Iterations', 'Coherence']
                 writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                 writer.writeheader()
@@ -365,14 +364,14 @@ def lda():
         plt.xlabel('Número de Tópicos')
         plt.ylabel('Coherencia (u_mass)')
         plt.title('Coherencia en función del número de tópicos')
-        plt.savefig('output/coherence_umass.png')
+        plt.savefig(safe_folder+'/coherence_umass.png')
         
         plt.figure()
         plt.plot(num_topics_values, cv_values)
         plt.xlabel('Número de Tópicos')
         plt.ylabel('Coherencia (c_v)')
         plt.title('Coherencia en función del número de tópicos')
-        plt.savefig('output/coherence_cv.png')
+        plt.savefig(safe_folder+'/coherence_cv.png')
 
         # Imprimimos el mejor resultado
         if args.verbose:
@@ -385,7 +384,7 @@ def lda():
                 print(topic)
         
         # Guardamos los mejores topicos
-        with open('output/topics.txt', 'w') as f:
+        with open(safe_folder+'/topics.txt', 'w') as f:
             f.write('Media coherencia de topico: %.4f.\n' % best_avg_topic_coherence)
             f.write('Mejores parametros: num_topics=%d, passes=%d, iterations=%d\n' % (best_num_topic, best_passes, best_iterations))
             i=0
@@ -395,7 +394,7 @@ def lda():
                 f.write(str(topic)+'\n')
         
         # Guardamos el modelo
-        best_model.save('output/lda_model')
+        best_model.save(safe_folder+'/lda_model')
     except Exception as e:
         print(Fore.RED+"Error al realizar el clustering"+Fore.RESET)
         print(e)
@@ -459,7 +458,7 @@ def nmf():
         num_topics_values = []
 
         with tqdm(total=len(args.nmf["num_topics"]) * len(args.nmf["passes"]) * len(args.nmf["iterations"])) as pbar:
-            with open('output/clustering_results.csv', 'w', newline='') as csvfile:
+            with open(safe_folder+'/clustering_results.csv', 'w', newline='') as csvfile:
                 fieldnames = ['Num Topics', 'Passes', 'Iterations', 'Coherence']
                 writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                 writer.writeheader()
@@ -503,13 +502,13 @@ def nmf():
         plt.xlabel('Número de Tópicos')
         plt.ylabel('Coherencia (u_mass)')
         plt.title('Coherencia en función del número de tópicos')
-        plt.savefig('output/coherence_umass.png')
+        plt.savefig(safe_folder+'/coherence_umass.png')
 
         plt.plot(num_topics_values, cv_values)
         plt.xlabel('Número de Tópicos')
         plt.ylabel('Coherencia (c_v)')
         plt.title('Coherencia en función del número de tópicos')
-        plt.savefig('output/coherence_cv.png')
+        plt.savefig(safe_folder+'/coherence_cv.png')
 
         # Imprimimos el mejor resultado
         if args.verbose:
@@ -522,7 +521,7 @@ def nmf():
                 print(topic)
         
         # Guardamos los mejores topicos
-        with open('output/topics.txt', 'w') as f:
+        with open(safe_folder+'/topics.txt', 'w') as f:
             f.write('Media coherencia de topico: %.4f.\n' % best_avg_topic_coherence)
             f.write('Mejores parametros: num_topics=%d, passes=%d, iterations=%d\n' % (best_num_topic, best_passes, best_iterations))
             i=0
@@ -532,7 +531,7 @@ def nmf():
                 f.write(str(topic)+'\n')
         
         # Guardamos el modelo
-        best_model.save('output/nmf_model')
+        best_model.save(safe_folder+'/nmf_model')
     except Exception as e:
         print(Fore.RED+"Error al realizar el clustering"+Fore.RESET)
         print(e)
@@ -548,10 +547,16 @@ if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal_handler)
     # Parseamos los argumentos
     args = parse_args()
+    print(args)
     # Si la carpeta output no existe la creamos
     print("\n- Creando carpeta output...")
+    safe_folder = args.file.split('\\')[-1].split('.')[0]
     try:
-        os.makedirs('output')
+        # Creamos la carpeta con el nombre del fichero csv recibido como argumento
+        # Ten en cuenta que args.file es el path completo al fichero csv - file='..\\Datos\\Output\\BritishPos.csv'
+        # Por lo que si lo dividimos por '\' y cogemos el último elemento, obtendremos el nombre del fichero
+        # En este caso BritishPos
+        os.makedirs(safe_folder)
         print(Fore.GREEN+"Carpeta output creada con éxito"+Fore.RESET)
     except FileExistsError:
         print(Fore.GREEN+"La carpeta output ya existe"+Fore.RESET)
@@ -573,7 +578,7 @@ if __name__ == "__main__":
     if args.debug:
         try:
             print("\n- Guardando datos preprocesados...")
-            data.to_csv('output/data-processed.csv', index=False)
+            data.to_csv(safe_folder+'/data-processed.csv', index=False)
             print(Fore.GREEN+"Datos preprocesados guardados con éxito"+Fore.RESET)
         except Exception as e:
             print(Fore.RED+"Error al guardar los datos preprocesados"+Fore.RESET)

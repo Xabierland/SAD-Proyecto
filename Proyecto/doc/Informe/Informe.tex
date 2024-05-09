@@ -199,7 +199,7 @@
                 \hline
                 \caption{Distribución Train y Dev}
                 \end{longtable}
-            \clearpage\subsection{Descripción del preproceso} {
+            \clearpage\subsection{Descripción del preproceso}
                 \paragraph*{Droppear los datos} {
                      Al principio de la etapa de preprocesamiento, siguiendo los tres clasificadores planteados se eliminaron las columnas que no pertenecían a cada uno o simplemente sobraban. Se eliminaron aquellas características que no aportaban información relevante o que podían introducir ruido en los modelos predictivos como la fecha de las reseñas, los nombres de los usuarios que han escrito las reseñas y también hemos optado por droppear el tipo de avión, ya que solo aparece en el british.}
                 \paragraph*{Separar los datos por tipos} {
@@ -208,9 +208,11 @@
                     Inicialmente, se verifica si hay columnas de texto para simplifica. Si es así, se procesara el texto de las respectivas columnas, primero se convierten todos los caracteres a minúsculas para estandarizar el texto, segundo se tokeniza el texto, es decir, se divide en palabras o tokens individuales, tercero se eliminan los números, cuarto se borran las palabras irrelevantes o stopwords en inglés, quinto se lematiza cada palabra para reducir las palabras a su raíz o forma base y finalmente, se eliminan los caracteres especiales como las diéresis que aparecen en palabras como Zürich que aunque en raras ocasiones aparecen. }
                 \paragraph*{Convertir las columnas categóricas en numéricas} {
                     Se trabaja con las columnas que son categóricas, las que tienen un texto que se repite varias veces y que no tienen una gran cantidad de elementos diferentes, para ayudar a los modelos de aprendizaje lo que hacemos es coger las categorías de la columna y a cada valor diferente se le asigna un numero distinto y cada vez que en esa columna aparezca ese dato aparecerá ese numero, así hemos transformado correctamente una columna categórica a una numérica.}
-                \paragraph*{Procesar los missing values} { 
+                \paragraph*{Procesar los missing values} 
+                { 
                     Cuando trabajamos con datos, es común encontrarnos con valores faltantes los cuales deben ser tratados para el correcto funcionamiento de nuestro modelo. 
                     Nuestras opciones son las siguientes:
+                }
                 \begin{itemize}
                     \item \textbf{Eliminar valores faltantes (Drop)}  
                     {En este metodo eliminamos las filas que contienen valores faltantes. Esto significa que si una fila tiene al menos un valor faltante en cualquiera de sus columnas, la eliminamos por completo.}
@@ -302,7 +304,8 @@
                     \includegraphics[width=\textwidth]{img/oversampling.png}
                     \caption{Resultados con oversampling}
                 \end{figure}
-                \paragraph{}{
+                \paragraph*{}
+                {
                     En ese momento nos vino a la cabeza el examen de laboratorio y decidimos usar la técnica SMOTE, la cual funciona como el oversampling pero en vez de ir repitiendo datos genera datos artificiales, lo que aumenta el ruido en nuestro en nuestro modelo y mejora contra el posible overfitting aunque todavía hay que tener cuidado, al usar el método comentado obtuvimos resultados muy positivos \color{green}{Mejor puntuacion:}
                 }
                 \begin{figure}[H]
@@ -359,12 +362,14 @@
                 \item Algoritmos
                 \begin{itemize}
                     \item Latent Dirichlet Allocation (LDA)
-                    \item \st{Non-Negative Matrix Factorization (NMF)}
+                    \item Non-Negative Matrix Factorization (NMF)
                 \end{itemize}
                 \item Link a la documentación
                 \begin{itemize}
-                    \item \href{https://radimrehurek.com/gensim/auto_examples/tutorials/run_lda.html}{Gensim - Tutorial - Run LDA}
                     \item \href{https://radimrehurek.com/gensim/models/ldamodel.html}{Gensim - LDA Model}
+                    \item \href{https://radimrehurek.com/gensim/auto_examples/tutorials/run_lda.html}{Gensim - Tutorial - Run LDA}
+                    \item \href{https://radimrehurek.com/gensim/models/nmf.html}{Gensim - NMF Model}
+                    \item \href{https://radimrehurek.com/gensim_3.8.3/models/nmf.html}{Gensim - Tutorial - NMF Model}
                     \item \href{https://radimrehurek.com/gensim/models/coherencemodel.html}{Gensim - Coherence Model}
                     \item \href{https://gensimr.news-r.org/articles/coherence}{Gensim - Article - Coherence}
                 \end{itemize}
@@ -386,18 +391,28 @@
                     \item Eliminarmos las filas que no contengan informacion.
                     \item Pasamos todo el texto a minúsculas
                     \item Tokenizamos el texto (dividimos el texto en palabras).
-                    \item Borramos los números.
+                    \item Borramos los números (ya que no aportan información en este caso)
                     \item Borramos las stopwords (palabras comunes que no aportan información).
                     \item Lemmatizamos el texto (reducimos las palabras a su raíz).
-                    \item Unimos todas las columnas de texto en una sola.
-                    \item Generamos bigramas y \st{trigramas}.
+                    \item Unimos todas las columnas de texto en una sola (Gensim solo acepta un texto).
+                    \item Generamos bigramas (se ha optado por no generar trigramas ya que no aportaban información en las pruebas realizadas).
                 \end{enumerate}
                 \paragraph*{}{
                     De esta forma obtenemos un texto limpio y listo para ser procesado por los algoritmos de Topic Modeling.
                 }
-            \subsection{Algoritmo de Asignación Latente de Dirichlet (LDA)}
+                \paragraph*{}
+                {
+                    Para elegir el algoritmo a trabajar hemos tenido que elegir entre las dos categorías de algoritmos de clustering, \textit{``hard clustering"} y \textit{``soft clustering"}
+                }
+                \paragraph*{Los algoritmos Hard Clustering}{
+                    suelen ser algoritmos mas sencillos y rápidos pero suelen ser menos precisos y \textbf{no permiten el solapamiento de topicos}, cualidad deseable para la tarea de Topic Modeling. A esta categoría pertenece el algoritmo \textbf{K-Means} y \textbf{Nearest Neighbors}.
+                }
+                \paragraph*{Los algoritmos Soft Clustering}{
+                    son algoritmos más complejos y lentos pero permiten el solapamiento de topicos dado que la pertenencia de un documento es probabilistica y no binaria. A esta categoria pertenecen algoritmos como \textbf{LDA}, \textbf{NMF} o \textbf{GMM}.
+                }
+            \clearpage\subsection{Algoritmo de Asignación Latente de Dirichlet (LDA)}
                 \paragraph*{}{
-                    Con el texto preprocesado ya podemos aplicar el algoritmo de LDA.
+                    Con el texto preprocesado ya podemos aplicar el algoritmo elegido, LDA.
                     El algoritmo de Asignación Latente de Dirichlet (LDA, por sus siglas en inglés) es un método popular para el modelado de temas en un conjunto de documentos.
                     Su funcionamiento es el siguiente:
                 }
@@ -411,14 +426,34 @@
                 \end{enumerate}
                 \paragraph*{}{
                     En este caso, la ejecucion del algoritmo corre a cargo de la librería Gensim, la cual nos proporciona una interfaz sencilla para trabajar con LDA.
-                    Ademas, para evaluar la calidad de los temas generados, se ha utilizado la métrica de coherencia. La coherencia puede ser calculada de varias formas, nosotros, usaremos tanto umass como \st{c\_v}.
+                    Ademas, para evaluar la calidad de los temas generados, se ha utilizado la métrica de coherencia. 
+                    La coherencia puede ser calculada de varias formas, nosotros, usaremos tanto \textbf{umass} como \textbf{c\_v}.
+                    De esta forma podemos seleccionar el número de temas que mejor se ajuste a nuestros datos.
                 }
                 \paragraph*{}{
-                    La ventaja de usar LDA es que es un algoritmo no supervisado, por lo que no necesita etiquetas para entrenar. Además, es un algoritmo muy flexible y puede ser aplicado a cualquier conjunto de documentos.
-                    Por otro lado, LDA tiene algunas desventajas. Por ejemplo, es un algoritmo muy lento y puede ser difícil de interpretar. Además, es difícil de ajustar y puede ser difícil de converger.
+                    La ventaja de usar LDA es que es un \textbf{algoritmo no supervisado}, por lo que no necesita etiquetas para entrenar.
+                    LDA es uno de los metodos más populares para el modelado de topicos debido a ser un \textbf{metodo probabilistico} y permitir el \textbf{solapamiento de topicos}. 
+                    Además, es un algoritmo muy flexible y puede ser aplicado a cualquier conjunto de documentos.
+                    Por otro lado, LDA tiene algunas desventajas. 
+                    Por ejemplo, es un algoritmo muy lento y puede ser difícil de interpretar. 
+                    Además, es difícil de ajustar y puede ser \textbf{difícil de converger}.
                 }
-            \subsection{Non-Negative Matrix Factorization (NMF)}
-                %TODO
+            \subsection{Algoritmo de Factorización de Matrices No Negativas (NMF)}
+                \paragraph*{}{
+                    El algoritmo de Factorización de Matrices No Negativas (NMF, por sus siglas en inglés) es otro método popular para el modelado de temas en un conjunto de documentos.
+                    Su funcionamiento es el siguiente:
+                }
+                \begin{enumerate}
+                    \item Se decide el número de temas que se quieren extraer.
+                    \item Se inicializan dos matrices, una que representa los documentos y otra que representa los temas.
+                    \item Se calcula la distancia entre las dos matrices y se actualizan las matrices para minimizar la distancia.
+                    \item Se repiten los pasos 2 y 3 hasta que converja.
+                \end{enumerate}
+                \paragraph*{}{
+                    Al igual que con LDA, la ejecucion del algoritmo corre a cargo de Gensim.
+                    Para evaluar la calidad de los temas generados, se ha utilizado la métrica de coherencia.
+                    No obstante, los resultados obtenidos con NMF no han sido satisfactorios, por lo que hemos decidido centrarnos en LDA.
+                }
         \clearpage\section{Resultados}
             \subsection{Resultados de British Airline}
                 \subsubsection*{Valoraciones Positivas}

@@ -51,6 +51,8 @@
         \begin{itemize}
             \item kNN: k-Nearest Neighbors
             \item LDA: Latent Dirichlet Allocation
+            \item BoW: Bag of Words
+            \item Tf-Idf: Term frequency - Inverse document frequency
         \end{itemize}
     \chapter{Tableau: Análisis de los Datos iniciales}
         \section{Introducción}
@@ -64,13 +66,13 @@
         \section{Descripción de los datos}
             \begin{longtable}{|p{4cm}|p{4,7cm}|p{5,5cm}|}
                 \hline
-                \textbf{Titulo} & \textbf{Contenido}& \textbf{Descripcion}\\
+                \textbf{Titulo} & \textbf{Contenido}& \textbf{Descripción}\\
                 \hline
-                Title & String, Cualitativo, Nominal & Breve descripcion de la review\\
+                Title & String, Cualitativo, Nominal & Breve descripción de la review\\
                 \hline
                 Name & String, Cualitativo, Ordinal & Nombre del que ha hecho la review\\
                 \hline
-                Airline & String, Cualitativo, Nominal & Nombre de la aerolinina\\
+                Airline & String, Cualitativo, Nominal & Nombre de la aerolínea\\
                 \hline
                 Date & Date, Cualitativo, Nominal & Fecha de la review\\
                 \hline
@@ -84,9 +86,9 @@
                 \hline
                 Class & String, Cualitativo, Nominal & Tipo de clase del vuelo\\
                 \hline
-                Seat Confort & Int, Cuantitativo, Discreto & Comfort del asiento\\
+                Seat Confort & Int, Cuantitativo, Discreto & Confort del asiento\\
                 \hline
-                Staff Service & Int, Cuantitativo, Discreto & Servicio del presonal\\
+                Staff Service & Int, Cuantitativo, Discreto & Servicio del personal\\
                 \hline
                 Food and Beverages & Int, Cuantitativo, Discreto & Comidas y bebidas\\
                 \hline
@@ -94,9 +96,9 @@
                 \hline
                 Value For Money & Int, Cuantitativo, Discreto & Valor por dinero\\
                 \hline
-                Overall Rating & String, Cuantitativo, Discreto & Calificacion general\\
+                Overall Rating & String, Cuantitativo, Discreto & Calificación general\\
                 \hline
-                Numerical Overall Rating & Int, Cuantitativo, Discreto & Puntuacion numérica\\
+                Numerical Overall Rating & Int, Cuantitativo, Discreto & Puntuación numérica\\
                 \hline
                 \caption{Descripción de los datos}
             \end{longtable}
@@ -135,7 +137,7 @@
                 \centering
                 \includegraphics[width=0.3\textwidth]{img/Guion4.png}
                 \includegraphics[width=0.5\textwidth]{img/Verified.png}
-                \caption{Ratring de British Airline y Air France por estado de verificacion}
+                \caption{Rating de British Airline y Air France por estado de verificacion}
             \end{figure}
             
 
@@ -150,7 +152,7 @@
                 \centering
                 \includegraphics[width=0.3\textwidth]{img/Guion2.png}
                 \includegraphics[width=0.5\textwidth]{img/Quesitos.png}
-                \caption{Distribucion de valoraciones}
+                \caption{Distribución de valoraciones}
             \end{figure}
             
             \paragraph*{}{
@@ -167,7 +169,7 @@
             \end{figure}
 
             \paragraph*{}{
-            Viendo esto, tenemos que mejorar sin duda la primera clase ya que las ultimas reviews esta siedo muy malas y por ultimo tendriamos que hacer cambios generales ya que todas las clases estan obteiendo malas criticas.
+            Viendo esto, tenemos que mejorar sin duda la primera clase ya que las ultimas reviews esta siendo muy malas y por ultimo tendríamos que hacer cambios generales ya que todas las clases están obteniendo malas criticas.
             }
     \chapter{Datos para clasificación: Análisis, Preproceso y Experimentación}
         \section{Datos}
@@ -199,7 +201,7 @@
                 \hline
                 \caption{Distribución Train y Dev}
                 \end{longtable}
-            \clearpage\subsection{Descripción del preproceso}
+            \clearpage\subsection{Descripción del preproceso} {
                 \paragraph*{Droppear los datos} {
                      Al principio de la etapa de preprocesamiento, siguiendo los tres clasificadores planteados se eliminaron las columnas que no pertenecían a cada uno o simplemente sobraban. Se eliminaron aquellas características que no aportaban información relevante o que podían introducir ruido en los modelos predictivos como la fecha de las reseñas, los nombres de los usuarios que han escrito las reseñas y también hemos optado por droppear el tipo de avión, ya que solo aparece en el british.}
                 \paragraph*{Separar los datos por tipos} {
@@ -208,25 +210,27 @@
                     Inicialmente, se verifica si hay columnas de texto para simplifica. Si es así, se procesara el texto de las respectivas columnas, primero se convierten todos los caracteres a minúsculas para estandarizar el texto, segundo se tokeniza el texto, es decir, se divide en palabras o tokens individuales, tercero se eliminan los números, cuarto se borran las palabras irrelevantes o stopwords en inglés, quinto se lematiza cada palabra para reducir las palabras a su raíz o forma base y finalmente, se eliminan los caracteres especiales como las diéresis que aparecen en palabras como Zürich que aunque en raras ocasiones aparecen. }
                 \paragraph*{Convertir las columnas categóricas en numéricas} {
                     Se trabaja con las columnas que son categóricas, las que tienen un texto que se repite varias veces y que no tienen una gran cantidad de elementos diferentes, para ayudar a los modelos de aprendizaje lo que hacemos es coger las categorías de la columna y a cada valor diferente se le asigna un numero distinto y cada vez que en esa columna aparezca ese dato aparecerá ese numero, así hemos transformado correctamente una columna categórica a una numérica.}
-                \paragraph*{Procesar los missing values} 
-                { 
+                \paragraph*{Procesar los missing values} { 
                     Cuando trabajamos con datos, es común encontrarnos con valores faltantes los cuales deben ser tratados para el correcto funcionamiento de nuestro modelo. 
                     Nuestras opciones son las siguientes:
-                }
+                    }
                 \begin{itemize}
                     \item \textbf{Eliminar valores faltantes (Drop)}  
                     {En este metodo eliminamos las filas que contienen valores faltantes. Esto significa que si una fila tiene al menos un valor faltante en cualquiera de sus columnas, la eliminamos por completo.}
                     \item \textbf{Imputar con la media}  
                       {Reemplazamos los valores faltantes con la media de los valores existentes en esa columna.}
                     \item \textbf{Imputar con la mediana}  
-                      {Este metodo es similar al anterior, pero usamos la mediana en lugar de la media.}
+                      {Este método es similar al anterior, pero usamos la mediana en lugar de la media.}
                     \item \textbf{Imputar con la moda}  
                       { Reemplazamos los valores faltantes con el valor más común en esa columna.}
                 \end{itemize}
                 \paragraph*{}{
                     Nosotros de todas las opciones implementadas hemos optado por usar el drop, ya que para las columnas de texto imputar puede resultar difícil, además es mas rápido y con la cantidad de filas existentes no debería ser un gran problema, aun así todas las opciones anteriores están implementadas aunque puede que den problemas con los textos.
                 }
-                \paragraph*{Reescalar los datos} {Los metodos de reescalados de datos que estan implementados son los siguientes:}
+                \paragraph*{Reescalar los datos} 
+                {
+                Los metéodos de reescalados de datos que están implementados son los siguientes:
+                }
                 \begin{itemize}
                     \item \textbf{MinMaxScaler}   
                         El método MinMaxScaler escala los datos llevándolos a un rango definido, generalmente entre 0 y 1. Esto se logra restando el valor mínimo de cada característica y luego dividiéndolo por el rango (valor máximo - valor mínimo). Es útil cuando los algoritmos requieren que los datos estén en un rango limitado o cuando no se puede operar con números negativos.
@@ -241,7 +245,7 @@
                     Para realizar el análisis de sentimientos, hemos utilizado Naive Bayes, por lo tanto, el reescalado no es crucial, ya que este algoritmo no se ve tan afectado como lo estaría kNN. Sin embargo, hemos aplicado el escalador MinMax para mantener los datos en valores positivos, dado que el Multinomial Naive Bayes presenta problemas con datos negativos.
                 }
                 \paragraph*{Procesar el texto}{
-                    El procesamiento de texto es un componente fundamental, ya que sin el, el texto no seria utilizable para entrenar nuestro modelo, nosotros tenemos implementados dos metodos de procesamiento de texto, los cuales son:
+                    El procesamiento de texto es un componente fundamental, ya que sin el, el texto no seria utilizable para entrenar nuestro modelo, nosotros tenemos implementados dos métodos de procesamiento de texto, los cuales son:
                 }
                 \paragraph*{TF-IDF}{
                       el cual es una técnica que refleja la importancia de una palabra en un documento en relación con una colección de documentos, el corpus. Funciona calculando la frecuencia de una palabra en un documento TF y multiplicándola por la inversa de la frecuencia de esa palabra en el corpus IDF. Esto ayuda a ajustar el valor de las palabras comunes que aparecen en muchos documentos y son menos informativas que las palabras que aparecen en menos documentos.
@@ -250,36 +254,210 @@
                      es un modelo más simple que crea un saco de todas las palabras en los documentos, sin tener en cuenta el orden o la estructura del texto. Cada documento se representa como un vector en un espacio multidimensional donde cada dimensión corresponde a una palabra del corpus, y el valor en esa dimensión es la frecuencia de la palabra en el documento.
                 }
                 \paragraph*{}{
-                    Nosotros por obvias razones hemos optado por utilizar el TF-IDF por ser un metodo más avanzado y el que nos puede dar mejores resultados a la hora de entrenar el modelo
+                    Nosotros por obvias razones hemos optado por utilizar el TF-IDF por ser un método más avanzado y el que nos puede dar mejores resultados a la hora de entrenar el modelo
                 }    
             \clearpage\subsection{Primeros resultados}
                 \paragraph*{}{
-                Teniendo en cuenta que consideramos que después de hacer lo comentado en el apartado de muestreo se selecciona SMOTE para balancear las clases, ya que sin el como hemos visto en el apartado de distribución de las clases la clase neutra no estaria muy balanceada y podría resultar en menor capacidad de predicción de la anterior.
+                Teniendo en cuenta que consideramos que después de hacer lo comentado en el apartado de muestreo se selecciona SMOTE para balancear las clases, ya que sin el como hemos visto en el apartado de distribución de las clases la clase neutra no estaría muy balanceada y podría resultar en menor capacidad de predicción de la anterior.
                 }
                 \paragraph*{}{
                 Los primeros resultados que obtuvimos eran poco alentadores, probamos con diferentes algoritmos para probar sus respectivos rendimientos con nuestros datos, primero probamos a hacer kNN:
                 }
-                \begin{figure}[H]
-                    \centering
-                    \includegraphics[width=0.7\textwidth]{img/kNNSMOTE.png}
-                    \caption{Resultados de la ejecucion de kNN}
-                \end{figure}
+                     \\
+                    \phantom{}
+                    \\
+                    \begin{center} {
+                    \textbf{Algoritmo: }
+                    \\
+                    kNN
+                    \\
+                    \textbf{Mejores parámetros: }
+                    \\
+                    algorithm: auto, leaf\_size: 20, n\_neighbors: 3, p: 1, weights: distance
+                    \\
+                    \textbf{Mejor puntuación: }
+                    \\
+                    0.780552
+                    \\
+                    \textbf{F1-score micro: }
+                    \\
+                    0.810231
+                    \\
+                    \textbf{F1-score macro: }
+                    \\
+                    0.796172
+                    \\
+                    \textbf{Informe de clasificación: }
+
+                    \begin{longtable}{|c|c|c|c|c|}
+                    \hline
+                    & \textbf{Precision} & \textbf{Recall} & \textbf{F1Score} & \textbf{Support} \\
+                    \hline
+                    \textbf{Negativa} & 0.79 & 0.60 & 0.68 & 188 \\
+                    \hline
+                    \textbf{Neutra} & 0.85 & 1.00 & 0.92 & 218 \\
+                    \hline
+                    \textbf{Positiva} & 0.78 & 0.81 & 0.79 & 200 \\
+                    \hline
+                    & \phantom{} & \phantom{} & \phantom{} & \phantom{} \\
+                    \hline
+                    \textbf{Accuracy} &  &  & 0.81 & 606 \\
+                    \hline
+                    \textbf{Macro avg} & 0.81 & 0.80 & 0.80 & 606 \\
+                    \hline
+                    \textbf{Weighted avg} & 0.81 & 0.81 & 0.80 & 606 \\
+                    \hline
+                    \caption{Informe de clasificación de kNN}
+                    \end{longtable}
+            
+                    \textbf{Matriz de confusión: }
+
+
+                    \begin{longtable}{|c|c|c|c|c|}
+                    \hline
+                     & \textbf{Predicción Negativa} & \textbf{Predicción Neutra} & \textbf{Predicción Positiva} & \textbf{Real Total} \\ \hline
+                    \endhead
+                    %
+                    \textbf{Real Negativa} & 112 & 30 & 46 & 188\\ \hline
+                    \textbf{Real Neutra} & 1 & 217 & 0 & 218\\ \hline
+                    \textbf{Real Positiva} & 29 & 9 & 162 & 200\\ \hline
+                    \textbf{Predicción Total} & 142 & 256 & 202  & \\
+                    \hline
+                    \caption{Matriz de confusión de kNN}
+                    \end{longtable}}
+                    \end{center}
                 \paragraph*{}{
                    Sorpresivamente los resultados son bastante positivos, aunque el tiempo de ejecución en este caso fue mucho mayor al de Naive Bayes, siguiendo nuestras pruebas decidimos ejecutar el algoritmo random forest el cual creemos que sera aun más positivo ya que se puede considerarse más complejo que el kNN:
                 }
-                \begin{figure}[H]
-                    \centering
-                    \includegraphics[width=0.7\textwidth]{img/randomForestSMOTE.png}
-                    \caption{Resultados de la ejecucion de RandomForest}
-                \end{figure}
+                     \\
+                    \phantom{}
+                    \\
+                    \begin{center} {
+                    \textbf{Algoritmo: }
+                    \\
+                    Random Forest
+                    \\
+                    \textbf{Mejores parámetros: }
+                    \\
+                    bootstrap: False, criterion: gini, max\_depth: 10, max\_features: sqrt, min\_samples\_leaf: 1, min\_samples\_split: 10, n\_estimators: 50
+                    \\
+                    \textbf{Mejor puntuación: }
+                    \\
+                    0.7853206544138149
+                    \\
+                    \textbf{F1-score micro: }
+                    \\
+                    0.7557755775577558
+                    \\
+                    \textbf{F1-score macro: }
+                    \\
+                    0.7523710398326774
+                    \\
+                    \textbf{Informe de clasificación: }
+
+                    \begin{longtable}{|c|c|c|c|c|}
+                    \hline
+                    & \textbf{Precision} & \textbf{Recall} & \textbf{F1Score} & \textbf{Support} \\
+                    \hline
+                    \textbf{Negativa} & 0.58 & 0.82 & 0.68 & 188 \\
+                    \hline
+                    \textbf{Neutra} & 0.98 & 0.88 & 0.93 & 218 \\
+                    \hline
+                    \textbf{Positiva} & 0.78 & 0.56 & 0.65 & 200 \\
+                    \hline
+                    & \phantom{} & \phantom{} & \phantom{} & \phantom{} \\
+                    \hline
+                    \textbf{Accuracy} &  &  & 0.76 & 606 \\
+                    \hline
+                    \textbf{Macro avg} & 0.78 & 0.75 & 0.75 & 606 \\
+                    \hline
+                    \textbf{Weighted avg} & 0.79 & 0.76 & 0.76 & 606 \\
+                    \hline
+                    \caption{Informe de clasificación de Random Forest}
+                    \end{longtable}
+            
+                    \textbf{Matriz de confusión: }
+
+
+                    \begin{longtable}{|c|c|c|c|c|}
+                    \hline
+                     & \textbf{Predicción Negativa} & \textbf{Predicción Neutra} & \textbf{Predicción Positiva} & \textbf{Real Total} \\ \hline
+                    \endhead
+                    %
+                    \textbf{Real Negativa} & 154 & 3 & 31 & 188\\ \hline
+                    \textbf{Real Neutra} & 25 & 192 & 1 & 218\\ \hline
+                    \textbf{Real Positiva} & 87 & 1 & 112 & 200\\ \hline
+                    \textbf{Predicción Total} & 266 & 196 & 144  & \\
+                    \hline
+                    \caption{Matriz de confusión de Random Forest}
+                    \end{longtable}}
+                    \end{center}
                 \paragraph*{}{
-                Después de ejecutar el Random Forest observamos que la 'mejora' es casi inexistente, de hecho el F1 macro y micro se ven reducidos, por lo que ahora lo unico que nos toca es ejecutar el Naive Bayes:
+                Después de ejecutar el Random Forest observamos que la 'mejora' es casi inexistente, de hecho el F1 macro y micro se ven reducidos, por lo que ahora lo único que nos toca es ejecutar el Naive Bayes:
                 }
-                \begin{figure}[H]
-                    \centering
-                    \includegraphics[width=0.7\textwidth]{img/SMOTE.png}
-                    \caption{Resultados de la ejecucion de Naive Bayes}
-                \end{figure}
+                     \\
+                    \phantom{}
+                    \\
+                    \begin{center} {
+                    \textbf{Algoritmo: }
+                    \\
+                    Naive Bayes
+                    \\
+                    \textbf{Mejores parámetros: }
+                    \\
+                    alpha: 0.0001, fit\_prior: True
+                    \\
+                    \textbf{Mejor puntuación: }
+                    \\
+                    0.852141
+                    \\
+                    \textbf{F1-score micro: }
+                    \\
+                    0.876237
+                    \\
+                    \textbf{F1-score macro: }
+                    \\
+                    0.869290
+                    \\
+                    \textbf{Informe de clasificación: }
+
+                    \begin{longtable}{|c|c|c|c|c|}
+                    \hline
+                    & \textbf{Precision} & \textbf{Recall} & \textbf{F1Score} & \textbf{Support} \\
+                    \hline
+                    \textbf{Negativa} & 0.86 & 0.72 & 0.78 & 188 \\
+                    \hline
+                    \textbf{Neutra} & 0.98 & 1.00 & 0.99 & 218 \\
+                    \hline
+                    \textbf{Positiva} & 0.79 & 0.89 & 0.84 & 200 \\
+                    \hline
+                    & \phantom{} & \phantom{} & \phantom{} & \phantom{} \\
+                    \hline
+                    \textbf{Accuracy} &  &  & 0.88 & 606 \\
+                    \hline
+                    \textbf{Macro avg} & 0.87 & 0.87 & 0.87 & 606 \\
+                    \hline
+                    \textbf{Weighted avg} & 0.88 & 0.88 & 0.87 & 606 \\
+                    \hline
+                    \caption{Informe de clasificación de Naive Bayes con SMOTE}
+                    \end{longtable}
+            
+                    \textbf{Matriz de confusión: }
+
+
+                    \begin{longtable}{|c|c|c|c|c|}
+                    \hline
+                     & \textbf{Predicción Negativa} & \textbf{Predicción Neutra} & \textbf{Predicción Positiva} & \textbf{Real Total} \\ \hline
+                    \endhead
+                    %
+                    \textbf{Real Negativa} & 136 & 5 & 47 & 188\\ \hline
+                    \textbf{Real Neutra} & 1 & 217 & 0 & 218\\ \hline
+                    \textbf{Real Positiva} & 22 & 0 & 178 & 200\\ \hline
+                    \textbf{Predicción Total} & 159 & 222 & 225  & \\
+                    \hline
+                    \caption{Matriz de confusión de Naive Bayes con SMOTE}
+                    \end{longtable}}
+                    \end{center}
                 \paragraph*{}{
                     En donde si que vemos una mejora bastante en todos los apartados.
                 }
@@ -289,32 +467,210 @@
             \clearpage\subsection{Descripción del Proceso de Submuestreo o Sobremuestreo}
                 \paragraph*{}
                 {
-                    Al principio probamos con undersampling, porque creíamos que había suficientes datos como para poder reducir la cantidad y que el modelo aun pudiese seguir prediciendo correctamente, pero después de testear la teoría y obtener un resultado por debajo de lo esperado \color{red}{Peor puntacion:}
+                    Al principio probamos con undersampling, porque creíamos que había suficientes datos como para poder reducir la cantidad y que el modelo aun pudiese seguir prediciendo correctamente, pero después de testear la teoría y obtener un resultado por debajo de lo esperado \color{red}{Peor puntación:}
                 }
-                \begin{figure}[H]
-                    \centering
-                    \includegraphics[width=\textwidth]{img/undersampling.png}
-                    \caption{Resultados con undersampling}
-                \end{figure}
+                     \\
+                    \phantom{}
+                    \\
+                    \begin{center}{
+                    \textbf{Algoritmo: }
+                    \\
+                    Naive Bayes
+                    \\
+                    \textbf{Mejores parámetros: }
+                    \\
+                    alpha: 0.0001, fit\_prior: False
+                    \\
+                    \textbf{Mejor puntuación: }
+                    \\
+                    0.304967
+                    \\
+                    \textbf{F1-score micro: }
+                    \\
+                    0.605095
+                    \\
+                    \textbf{F1-score macro: }
+                    \\
+                    0.371290
+                    \\
+                    \textbf{Informe de clasificación: }
+
+                    \begin{longtable}{|c|c|c|c|c|}
+                    \hline
+                    & \textbf{Precision} & \textbf{Recall} & \textbf{F1Score} & \textbf{Support} \\
+                    \hline
+                    \textbf{Negativa} & 0.30 & 0.09 & 0.14 & 34 \\
+                    \hline
+                    \textbf{Neutra} & 0.40 & 0.16 & 0.23 & 25 \\
+                    \hline
+                    \textbf{Positiva} & 0.64 & 0.90 & 0.75 & 98 \\
+                    \hline
+                    & \phantom{} & \phantom{} & \phantom{} & \phantom{} \\
+                    \hline
+                    \textbf{Accuracy} &  &  & 0.61 & 157 \\
+                    \hline
+                    \textbf{Macro avg} & 0.45 & 0.38 & 0.37 & 157 \\
+                    \hline
+                    \textbf{Weighted avg} & 0.53 & 0.61 & 0.53 & 157 \\
+                    \hline
+                    \caption{Informe de clasificación de Naive Bayes con Undersampling}
+                    \end{longtable}
+            
+                    \textbf{Matriz de confusión: }
+
+
+                    \begin{longtable}{|c|c|c|c|c|}
+                    \hline
+                     & \textbf{Predicción Negativa} & \textbf{Predicción Neutra} & \textbf{Predicción Positiva} & \textbf{Real Total} \\ \hline
+                    \endhead
+                    %
+                    \textbf{Real Negativa} & 3 & 2 & 29 & 34\\ \hline
+                    \textbf{Real Neutra} & 1 & 4 & 20 & 25\\ \hline
+                    \textbf{Real Positiva} & 6 & 4 & 88 & 98\\ \hline
+                    \textbf{Predicción Total} & 10 & 10 & 157 & \\
+                    \hline
+                    \caption{Matriz de confusión de Naive Bayes con Undersampling}
+                    \end{longtable}
+                    }
+                    \end{center}
                 \paragraph*{}{
                     Decidimos optar por trabajar con oversampling, y aunque mejoro no era lo suficientemente bueno \color{orange}{Puntuacion media:}
                 }
-                \begin{figure}[H]
-                    \centering
-                    \includegraphics[width=\textwidth]{img/oversampling.png}
-                    \caption{Resultados con oversampling}
-                \end{figure}
-                \paragraph*{}
-                {
-                    En ese momento nos vino a la cabeza el examen de laboratorio y decidimos usar la técnica SMOTE, la cual funciona como el oversampling pero en vez de ir repitiendo datos genera datos artificiales, lo que aumenta el ruido en nuestro en nuestro modelo y mejora contra el posible overfitting aunque todavía hay que tener cuidado, al usar el método comentado obtuvimos resultados muy positivos \color{green}{Mejor puntuacion:}
-                }
-                \begin{figure}[H]
-                    \centering
-                    \includegraphics[width=\textwidth]{img/SMOTE.png}
-                    \caption{Resultados con smote}
-                \end{figure}
+                     \\
+                    \phantom{}
+                    \\
+                    \begin{center}
+                    {
+                    \textbf{Algoritmo: }
+                    \\
+                    Naive Bayes
+                    \\
+                    \textbf{Mejores parámetros: }
+                    \\
+                    alpha: 0.0001, fit\_prior: False
+                    \\
+                    \textbf{Mejor puntuación: }
+                    \\
+                    0.650664
+                    \\
+                    \textbf{F1-score micro: }
+                    \\
+                    0.746534
+                    \\
+                    \textbf{F1-score macro: }
+                    \\
+                    0.670594
+                    \\
+                    \textbf{Informe de clasificación: }
+
+                    \begin{longtable}{|c|c|c|c|c|}
+                    \hline
+                    & \textbf{Precision} & \textbf{Recall} & \textbf{F1Score} & \textbf{Support} \\
+                    \hline
+                    \textbf{Negativa} & 0.65 & 0.73 & 0.69 & 195 \\
+                    \hline
+                    \textbf{Neutra} & 0.97 & 1.00 & 0.99 & 204 \\
+                    \hline
+                    \textbf{Positiva} & 0.40 & 0.29 & 0.34 & 106 \\
+                    \hline
+                    & \phantom{} & \phantom{} & \phantom{} & \phantom{} \\
+                    \hline
+                    \textbf{Accuracy} &  &  & 0.75 & 505 \\
+                    \hline
+                    \textbf{Macro avg} & 0.67 & 0.67 & 0.67 & 505 \\
+                    \hline
+                    \textbf{Weighted avg} & 0.73 & 0.75 & 0.74 & 505 \\
+                    \hline
+                    \caption{Informe de clasificación de Naive Bayes con Oversampling}
+                    \end{longtable}
+            
+                    \textbf{Matriz de confusión: }
+
+
+                    \begin{longtable}{|c|c|c|c|c|}
+                    \hline
+                     & \textbf{Predicción Negativa} & \textbf{Predicción Neutra} & \textbf{Predicción Positiva} & \textbf{Real Total} \\ \hline
+                    \endhead
+                    %
+                    \textbf{Real Negativa} & 142 & 6 & 47 & 195\\ \hline
+                    \textbf{Real Neutra} & 0 & 204 & 0 & 204\\ \hline
+                    \textbf{Real Positiva} & 75 & 0 & 31 & 106\\ \hline
+                    \textbf{Predicción Total} & 217 & 210 & 78 & \\
+                    \hline
+                    \caption{Matriz de confusión de Naive Bayes con Oversampling}
+                    \end{longtable}
+                  } 
+                  \end{center}
+                  
+
                 \paragraph*{}{
-                Siendo esta nuestra mejor opción, decidimos usar el metodo recien implementado para nuestro clasificador de sentimientos.
+                    En ese momento nos vino a la cabeza el examen de laboratorio y decidimos usar la técnica SMOTE, la cual funciona como el oversampling pero en vez de ir repitiendo datos genera datos artificiales, lo que aumenta el ruido en nuestro en nuestro modelo y mejora contra el posible overfitting aunque todavía hay que tener cuidado, al usar el método comentado obtuvimos resultados muy positivos \color{green}{Mejor puntuación:}
+                }
+                    \\
+                    \phantom{}
+                    \\
+                    \begin{center} {
+                    \textbf{Algoritmo: }
+                    \\
+                    Naive Bayes
+                    \\
+                    \textbf{Mejores parámetros: }
+                    \\
+                    alpha: 0.0001, fit\_prior: True
+                    \\
+                    \textbf{Mejor puntuación: }
+                    \\
+                    0.852141
+                    \\
+                    \textbf{F1-score micro: }
+                    \\
+                    0.876237
+                    \\
+                    \textbf{F1-score macro: }
+                    \\
+                    0.869290
+                    \\
+                    \textbf{Informe de clasificación: }
+
+                    \begin{longtable}{|c|c|c|c|c|}
+                    \hline
+                    & \textbf{Precision} & \textbf{Recall} & \textbf{F1Score} & \textbf{Support} \\
+                    \hline
+                    \textbf{Negativa} & 0.86 & 0.72 & 0.78 & 188 \\
+                    \hline
+                    \textbf{Neutra} & 0.98 & 1.00 & 0.99 & 218 \\
+                    \hline
+                    \textbf{Positiva} & 0.79 & 0.89 & 0.84 & 200 \\
+                    \hline
+                    & \phantom{} & \phantom{} & \phantom{} & \phantom{} \\
+                    \hline
+                    \textbf{Accuracy} &  &  & 0.88 & 606 \\
+                    \hline
+                    \textbf{Macro avg} & 0.87 & 0.87 & 0.87 & 606 \\
+                    \hline
+                    \textbf{Weighted avg} & 0.88 & 0.88 & 0.87 & 606 \\
+                    \hline
+                      \caption{Informe de clasificación de Naive Bayes con SMOTE}
+                    \end{longtable}
+            
+                    \textbf{Matriz de confusión: }
+
+
+                    \begin{longtable}{|c|c|c|c|c|}
+                    \hline
+                     & \textbf{Predicción Negativa} & \textbf{Predicción Neutra} & \textbf{Predicción Positiva} & \textbf{Real Total} \\ \hline
+                    \endhead
+                    %
+                    \textbf{Real Negativa} & 136 & 5 & 47 & 188\\ \hline
+                    \textbf{Real Neutra} & 1 & 217 & 0 & 218\\ \hline
+                    \textbf{Real Positiva} & 22 & 0 & 178 & 200\\ \hline
+                    \textbf{Predicción Total} & 159 & 222 & 225  & \\
+                    \hline
+                                    \caption{Matriz de confusión de Naive Bayes con SMOTE}
+                    \end{longtable}}
+                    \end{center}
+                \paragraph*{}{
+                Siendo esta nuestra mejor opción, decidimos usar el método recién implementado para nuestro clasificador de sentimientos.
                 }
         \clearpage\section{Algoritmos, link a la documentación y nombre de los hiperparámetros empleados}
             \subsection{Experimentación: Algoritmos empleados y Breve Descripción}
@@ -346,17 +702,17 @@
                     \end{itemize} 
                 \end{itemize}
                 \paragraph*{}{
-                Este metodo se basa en clasificar un nuevo punto de datos basándose en la mayoría de votos de sus k vecinos más cercanos
+                Este método se basa en clasificar un nuevo punto de datos basándose en la mayoría de votos de sus k vecinos más cercanos
                 }
             \subsection{Conclusión sobre el Sentiment Analysis}
                 \paragraph*{}{
-                    Como conclusion decir que
+                    Como conclusión decir que
                     hemos seleccionado el algoritmo Naive Bayes sobre Random Forest o KNN para el análisis de sentimientos de reseñas debido a varias razones clave. Primero, Naive Bayes es notablemente más rápido en términos de tiempo de entrenamiento y predicción, lo cual es crucial cuando se trabaja con grandes volúmenes de datos de texto. Además, a pesar de su simplicidad, Naive Bayes nos ha demostrado ser muy efectivo en tareas de clasificación de texto siendo el algoritmo que mejor resultados nos otorga. Por otro lado, modelos como Random Forest y KNN pueden ser computacionalmente costosos y menos eficientes en el manejo de datos de texto grandes.
                 }
                 \paragraph*{}{
                     La elección de SMOTE (Synthetic Minority Oversampling Technique) sobre métodos tradicionales de oversampling o undersampling en el análisis de sentimientos de reseñas se fundamenta en su capacidad para generar muestras sintéticas que ofrecen una representación más rica y diversa de la clase minoritaria. A diferencia del oversampling, que simplemente replica instancias existentes y puede conducir a un overfitting, SMOTE crea nuevas instancias sintéticas que ayudan a los modelos de aprendizaje automático a generalizar mejor. Por otro lado, el undersampling puede resultar en la pérdida de información valiosa al eliminar instancias de otras clases. SMOTE permite preservar esta información crítica mientras equilibra las clases, lo que resulta en un modelo más robusto y preciso para el análisis de sentimientos
                 }
-    \chapter{Datos para el Topic Modeling: Experimentación}
+        \chapter{Datos para el Topic Modeling: Experimentación}
         \section{Algoritmos, link a la documentación y nombre de los hiperparámetros empleados}
             \begin{itemize}
                 \item Algoritmos
@@ -482,7 +838,7 @@
                         \centering
                         \includegraphics[width=0.49\textwidth]{./img/british_airline_neutras_umass.png}
                         \includegraphics[width=0.49\textwidth]{./img/british_airline_neutras_cv.png}
-                        \caption{Coherencia de las valoraciones neutras de British Airline primer intento}
+                        \caption{Coherencia de las valoraciones neutras de British Airline}
                     \end{figure}
                     \paragraph*{}{
                         En este caso, las graficas son bastante diferentes entre si teniendo el c\_v bastantes picos en todo su recorrido.
@@ -517,7 +873,7 @@
                         \centering
                         \includegraphics[width=0.49\textwidth]{./img/air_france_positivas_umass.png}
                         \includegraphics[width=0.49\textwidth]{./img/air_france_positivas_cv.png}
-                        \caption{Coherencia de las valoraciones positivas de Air France primer intento}
+                        \caption{Coherencia de las valoraciones positivas de Air France}
                     \end{figure}
                     \paragraph*{}
                     {
@@ -534,7 +890,7 @@
                         \centering
                         \includegraphics[width=0.49\textwidth]{./img/air_france_neutras_umass.png}
                         \includegraphics[width=0.49\textwidth]{./img/air_france_neutras_cv.png}
-                        \caption{Coherencia de las valoraciones neutras de Air France primer intento}
+                        \caption{Coherencia de las valoraciones neutras de Air France}
                     \end{figure}
                     \paragraph*{}
                     {
@@ -729,6 +1085,363 @@
                 Lo que se traduciria en una mejora de la percepción de la aerolinea en el mercado y por lo tanto en un aumento de la cuota de mercado.
             }
     \chapter{Anexo}
+        \section{Sentiment Analysis}
+            \subsection{KNN}
+                \label{tab:resultados_analisis_sentimientos} 
+                    \begin{longtable}{|p{295.6px}|p{100.3px}|}
+                    \hline
+                    \textbf{Hiperparametros} & \textbf{Score}\\
+                    \hline                    
+                    algorithm: auto, leaf\_size: 20, n\_neighbors: 3, p: 1, weights: uniform & 0.747890003737003 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 20, n\_neighbors: 3, p: 1, weights: distance & 0.7805528333916956 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 20, n\_neighbors: 3, p: 2, weights: uniform & 0.5310822293165469 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 20, n\_neighbors: 3, p: 2, weights: distance & 0.5415575326449724 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 20, n\_neighbors: 5, p: 1, weights: uniform & 0.6994495129963783 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 20, n\_neighbors: 5, p: 1, weights: distance & 0.7551541682020672 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 20, n\_neighbors: 5, p: 2, weights: uniform & 0.4880582399282697 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 20, n\_neighbors: 5, p: 2, weights: distance & 0.5103352671950601 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 20, n\_neighbors: 7, p: 1, weights: uniform & 0.6672013725942756 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 20, n\_neighbors: 7, p: 1, weights: distance & 0.7419262836981728 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 20, n\_neighbors: 7, p: 2, weights: uniform & 0.45593645183044373 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 20, n\_neighbors: 7, p: 2, weights: distance & 0.5007213884859918 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 20, n\_neighbors: 9, p: 1, weights: uniform & 0.6562549699228911 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 20, n\_neighbors: 9, p: 1, weights: distance & 0.7326944156040384 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 20, n\_neighbors: 9, p: 2, weights: uniform & 0.43967821573140436 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 20, n\_neighbors: 9, p: 2, weights: distance & 0.4886967955216764 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 20, n\_neighbors: 11, p: 1, weights: uniform & 0.631915691935501 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 20, n\_neighbors: 11, p: 1, weights: distance & 0.7241171830556865 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 20, n\_neighbors: 11, p: 2, weights: uniform & 0.42876898311454187 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 20, n\_neighbors: 11, p: 2, weights: distance & 0.4834661111748696 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 30, n\_neighbors: 3, p: 1, weights: uniform & 0.747890003737003 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 30, n\_neighbors: 3, p: 1, weights: distance & 0.7805528333916956 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 30, n\_neighbors: 3, p: 2, weights: uniform & 0.5310822293165469 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 30, n\_neighbors: 3, p: 2, weights: distance & 0.5415575326449724 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 30, n\_neighbors: 5, p: 1, weights: uniform & 0.6994495129963783 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 30, n\_neighbors: 5, p: 1, weights: distance & 0.7551541682020672 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 30, n\_neighbors: 5, p: 2, weights: uniform & 0.4880582399282697 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 30, n\_neighbors: 5, p: 2, weights: distance & 0.5103352671950601 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 30, n\_neighbors: 7, p: 1, weights: uniform & 0.6672013725942756 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 30, n\_neighbors: 7, p: 1, weights: distance & 0.7419262836981728 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 30, n\_neighbors: 7, p: 2, weights: uniform & 0.45593645183044373 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 30, n\_neighbors: 7, p: 2, weights: distance & 0.5007213884859918 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 30, n\_neighbors: 9, p: 1, weights: uniform & 0.6562549699228911 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 30, n\_neighbors: 9, p: 1, weights: distance & 0.7326944156040384 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 30, n\_neighbors: 9, p: 2, weights: uniform & 0.43967821573140436 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 30, n\_neighbors: 9, p: 2, weights: distance & 0.4886967955216764 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 30, n\_neighbors: 11, p: 1, weights: uniform & 0.631915691935501 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 30, n\_neighbors: 11, p: 1, weights: distance & 0.7241171830556865 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 30, n\_neighbors: 11, p: 2, weights: uniform & 0.42876898311454187 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 30, n\_neighbors: 11, p: 2, weights: distance & 0.4834661111748696 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 40, n\_neighbors: 3, p: 1, weights: uniform & 0.747890003737003 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 40, n\_neighbors: 3, p: 1, weights: distance & 0.7805528333916956 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 40, n\_neighbors: 3, p: 2, weights: uniform & 0.5310822293165469 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 40, n\_neighbors: 3, p: 2, weights: distance & 0.5415575326449724 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 40, n\_neighbors: 5, p: 1, weights: uniform & 0.6994495129963783 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 40, n\_neighbors: 5, p: 1, weights: distance & 0.7551541682020672 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 40, n\_neighbors: 5, p: 2, weights: uniform & 0.4880582399282697 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 40, n\_neighbors: 5, p: 2, weights: distance & 0.5103352671950601 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 40, n\_neighbors: 7, p: 1, weights: uniform & 0.6672013725942756 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 40, n\_neighbors: 7, p: 1, weights: distance & 0.7419262836981728 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 40, n\_neighbors: 7, p: 2, weights: uniform & 0.45593645183044373 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 40, n\_neighbors: 7, p: 2, weights: distance & 0.5007213884859918 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 40, n\_neighbors: 9, p: 1, weights: uniform & 0.6562549699228911 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 40, n\_neighbors: 9, p: 1, weights: distance & 0.7326944156040384 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 40, n\_neighbors: 9, p: 2, weights: uniform & 0.43967821573140436 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 40, n\_neighbors: 9, p: 2, weights: distance & 0.4886967955216764 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 40, n\_neighbors: 11, p: 1, weights: uniform & 0.631915691935501 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 40, n\_neighbors: 11, p: 1, weights: distance & 0.7241171830556865 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 40, n\_neighbors: 11, p: 2, weights: uniform & 0.42876898311454187 \\
+                    \hline
+                    algorithm: auto, leaf\_size: 40, n\_neighbors: 11, p: 2, weights: distance & 0.4834661111748696 \\
+                    \hline
+                    \caption{Algoritmo KNN}
+                \end{longtable}
+                \begin{figure}[H]
+                    \centering
+                    \includegraphics[width=1\linewidth]{img/ibai2.png}
+                    \caption{Gráfico de puntuación respecto a hiperparametros de kNN}
+                \end{figure}
+            \clearpage
+            \subsection{Random Forest}
+                \label{tab:resultados_analisis_sentimientos} 
+                    \begin{longtable}{|p{285.6px}|p{100.3px}|}
+                    \hline
+                    \textbf{Hiperparametros} & \textbf{Score}\\
+                    \hline                    
+                    bootstrap : False, criterion: gini, max\_depth: 5, max\_features: sqrt,  min\_samples\_leaf: 1, min\_samples\_split: 2, n\_estimators: 50 & 0.7009033129637643 \\
+                    
+                    \hline
+                    bootstrap: False, criterion: gini, max\_depth: 5, max\_features: sqrt,  min\_samples\_leaf: 1, min\_samples\_split: 5, n\_estimators: 50 & 0.7098618057839883 \\
+                    
+                    \hline
+                    bootstrap: False, criterion: gini, max\_depth: 5, max\_features: sqrt,  min\_samples\_leaf: 1, min\_samples\_split: 10, n\_estimators: 50 & 0.7167832951745845 \\
+                    \hline
+                    bootstrap: False, criterion: gini, max\_depth: 5, max\_features: sqrt,  min\_samples\_leaf\: 2, min\_samples\_split: 2, n\_estimators: 50 & 0.7229011372134015 \\
+                    \hline
+                    bootstrap: False, criterion: gini, max\_depth: 5, max\_features: sqrt,  min\_samples\_leaf: 2, min\_samples\_split: 5, n\_estimators: 50 & 0.7024432631587892 \\
+                    \hline
+                    bootstrap: False, criterion: gini, max\_depth: 5, max\_features: sqrt,  min\_samples\_leaf: 2, min\_samples\_split: 10, n\_estimators: 50 & 0.7164047880477754 \\
+                    \hline
+                    bootstrap: False, criterion: gini, max\_depth: 5, max\_features: sqrt,  min\_samples\_leaf: 4, min\_samples\_split: 2, n\_estimators: 50 & 0.7111253950984 \\
+                    \hline
+                    bootstrap: False, criterion: gini, max\_depth: 5, max\_features: sqrt,  min\_samples\_leaf: 4, min\_samples\_split: 5, n\_estimators: 50 & 0.6940473473731624 \\
+                    \hline
+                    bootstrap: False, criterion: gini, max\_depth: 5, max\_features: sqrt,  min\_samples\_leaf: 4, min\_samples\_split: 10, n\_estimators: 50 & 0.7118779539863145 \\
+                    \hline
+                    bootstrap: False, criterion: gini, max\_depth: 5, max\_features: log2,  min\_samples\_leaf: 1, min\_samples\_split: 2, n\_estimators: 50 & 0.6666214244983764 \\
+                    \hline
+                    bootstrap: False, criterion: gini, max\_depth: 5, max\_features: log2,  min\_samples\_leaf: 1, min\_samples\_split: 5, n\_estimators: 50 & 0.6749730643301919 \\
+                    \hline
+                    bootstrap: False, criterion: gini, max\_depth: 5, max\_features: log2,  min\_samples\_leaf: 1, min\_samples\_split: 10, n\_estimators: 50 & 0.6679344324558547 \\
+                    \hline
+                    bootstrap: False, criterion: gini, max\_depth: 5, max\_features: log2, min\_samples\_leaf: 2, min\_samples\_split: 2, n\_estimators: 50 & 0.6509842815267748 \\
+                    \hline
+                    bootstrap: False, criterion: gini, max\_depth: 5, max\_features: log2, min\_samples\_leaf: 2, min\_samples\_split: 5, n\_estimators: 50 & 0.66269820880437 \\
+                    \hline
+                    bootstrap: False, criterion: gini, max\_depth: 5, max\_features: log2, min\_samples\_leaf: 2, min\_samples\_split: 10, n\_estimators: 50 & 0.6486570195891649 \\
+                    \hline
+                    bootstrap: False, criterion: gini, max\_depth: 5, max\_features: log2, min\_samples\_leaf: 4, min\_samples\_split: 2, n\_estimators: 50 & 0.6409421340366637 \\
+                    \hline
+                    bootstrap: False, criterion: gini, max\_depth: 5, max\_features: log2, min\_samples\_leaf: 4, min\_samples\_split: 5, n\_estimators: 50 & 0.6538860549546865 \\
+                    \hline
+                    bootstrap: False, criterion: gini, max\_depth: 5, max\_features: log2, min\_samples\_leaf: 4, min\_samples\_split: 10, n\_estimators: 50 & 0.6373447845935883 \\
+                    \hline
+                    bootstrap: False, criterion: gini, max\_depth: 10, max\_features: sqrt, min\_samples\_leaf: 1, min\_samples\_split: 2, n\_estimators: 50 & 0.7971966822864822 \\
+                    \hline
+                    bootstrap: False, criterion: gini, max\_depth: 10, max\_features: sqrt, min\_samples\_leaf: 1, min\_samples\_split: 5, n\_estimators: 50 & 0.7805288829604751 \\
+                    \hline
+                    bootstrap: False, criterion: gini, max\_depth: 10, max\_features: sqrt, min\_samples\_leaf: 1, min\_samples\_split: 10, n\_estimators: 50 & 0.7812939030815994 \\
+                    \hline
+                    bootstrap: False, criterion: gini, max\_depth: 10, max\_features: sqrt, min\_samples\_leaf: 2, min\_samples\_split: 2, n\_estimators: 50 & 0.786738092455415 \\
+                    \hline
+                    bootstrap: False, criterion: gini, max\_depth: 10, max\_features: sqrt, min\_samples\_leaf: 2, min\_samples\_split: 5, n\_estimators: 50 & 0.788699732250785 \\
+                    \hline
+                    bootstrap: False, criterion: gini, max\_depth: 10, max\_features: sqrt, min\_samples\_leaf: 2, min\_samples\_split: 10, n\_estimators: 50 & 0.7770972791251609 \\
+                    \hline
+                    bootstrap: False, criterion: gini, max\_depth: 10, max\_features: sqrt, min\_samples\_leaf: 4, min\_samples\_split: 2, n\_estimators: 50 & 0.765986921565929 \\
+                    \hline
+                    bootstrap: False, criterion: gini, max\_depth: 10, max\_features: sqrt, min\_samples\_leaf: 4, min\_samples\_split: 5, n\_estimators: 50 & 0.7759489122316663 \\
+                    \hline
+                    bootstrap: False, criterion: gini, max\_depth: 10, max\_features: sqrt, min\_samples\_leaf: 4, min\_samples\_split: 10, n\_estimators: 50 & 0.7686778124484874 \\
+                    \hline
+                    bootstrap: False, criterion: gini, max\_depth: 10, max\_features: log2, min\_samples\_leaf: 1, min\_samples\_split: 2, n\_estimators: 50 & 0.7491803494590925 \\
+                    \hline
+                    bootstrap: False, criterion: gini, max\_depth: 10, max\_features: log2, min\_samples\_leaf: 1, min\_samples\_split: 5, n\_estimators: 50 & 0.7396784368478776 \\
+                    \hline
+                    bootstrap: False, criterion: gini, max\_depth: 10, max\_features: log2, min\_samples\_leaf: 1, min\_samples\_split: 10, n\_estimators: 50 & 0.7236625061086731 \\
+                    \hline
+                    bootstrap: False, criterion: gini, max\_depth: 10, max\_features: log2, min\_samples\_leaf: 2, min\_samples\_split: 2, n\_estimators: 50 & 0.7232360615100657 \\
+                    \hline
+                    bootstrap: False, criterion: gini, max\_depth: 10, max\_features: log2, min\_samples\_leaf: 2, min\_samples\_split: 5, n\_estimators: 50 & 0.7240205184635566 \\
+                    \hline
+                    bootstrap: False, criterion: gini, max\_depth: 10, max\_features: log2, min\_samples\_leaf: 2, min\_samples\_split: 10, n\_estimators: 50 & 0.7163968287954765 \\
+                    \hline
+                    bootstrap: False, criterion: gini, max\_depth: 10, max\_features: log2, min\_samples\_leaf: 4, min\_samples\_split: 2, n\_estimators: 50 & 0.6988901251113119 \\
+                    \hline
+                    bootstrap: False, criterion: gini, max\_depth: 10, max\_features: log2, min\_samples\_leaf: 4, min\_samples\_split: 5, n\_estimators: 50 & 0.6972566049780521 \\
+                    \hline
+                    bootstrap: False, criterion: gini, max\_depth: 10, max\_features: log2, min\_samples\_leaf: 4, min\_samples\_split: 10, n\_estimators: 50 & 0.7012616540091825 \\
+                    \hline
+                    \caption{Algoritmo random forest}
+                \end{longtable}
+                \begin{figure}[H]
+                    \centering
+                    \includegraphics[width=1\linewidth]{img/ibai1.png}
+                    \caption{Gráfico de puntuación respecto a hiperparametros de random forest}
+                \end{figure}
+            \clearpage
+            \subsection{Naive Bayes}
+                \label{tab:resultados_analisis_sentimientos} 
+                    \begin{longtable}{|p{135.6px}|p{100.3px}|}
+                    \hline
+                    \textbf{Hiperparametros} & \textbf{Score}\\
+                    \hline                    
+                    alpha: 1e-08, fit\_prior: True & 0.8503467305487226 \\
+                    \hline
+                    alpha: 1e-08, fit\_prior: False & 0.8502868285987564 \\
+                    \hline
+                    alpha: 0.0001, fit\_prior: True & 0.8521413091491585 \\
+                    \hline
+                    alpha: 0.0001, fit\_prior: False & 0.8509234135758948 \\
+                    \hline
+                    alpha: 0.1, fit\_prior: True & 0.8186057600976835 \\
+                    \hline
+                    alpha: 0.1, fit\_prior: False & 0.8127903425908649 \\
+                    \hline
+                    alpha: 0.25, fit\_prior: True & 0.794432277904553 \\
+                    \hline
+                    alpha: 0.25, fit\_prior: False & 0.7883507153594175 \\
+                    \hline
+                    alpha: 0.5, fit\_prior: True & 0.7741365203269089 \\
+                    \hline
+                    alpha: 0.5, fit\_prior: False & 0.7672080185229718 \\
+                    \hline
+                    alpha: 0.75, fit\_prior: True & 0.7661044027685456 \\
+                    \hline
+                    alpha: 0.75, fit\_prior: False & 0.756719131682382 \\
+                    \hline
+                    alpha: 1.0, fit\_prior: True & 0.7486802453630557 \\
+                    \hline
+                    alpha: 1.0, fit\_prior: False & 0.7480445254041812 \\
+                    \hline
+                    alpha: 2.0, fit\_prior: True & 0.7112887563214083 \\
+                    \hline
+                    alpha: 2.0, fit\_prior: False & 0.7028362065689343 \\
+                    \hline
+                    \caption{Algoritmo Naive Bayes con Smote}
+                \end{longtable}
+                \begin{figure}[H]
+                    \centering
+                    \includegraphics[width=1\linewidth]{img/ibai3.png}
+                    \caption{Gráfico de puntuación respecto a hiperparametros de Naive Bayes con SMOTE}
+                \end{figure}
+                \label{tab:resultados_analisis_sentimientos} 
+                \begin{longtable}{|p{155.6px}|p{100.3px}|}
+                    \hline
+                    \textbf{Hiperparametros} & \textbf{Score}\\
+                    \hline                    
+                    alpha: 1e-08, fit\_prior: True&0.2739818876242718\\ 
+                    \hline
+                    alpha: 1e-08, fit\_prior: False&0.30102810387660883\\ 
+                    \hline
+                    alpha: 0.0001, fit\_prior: True&0.2802809871544677\\                     
+                    \hline                    
+                    alpha: 0.0001, fit\_prior: False&0.3049674786866818\\                     
+                    \hline
+                    alpha: 0.1, fit\_prior: True&0.26150415892351375\\                    
+                    \hline                
+                    alpha: 0.1, fit\_prior: False&0.2602628434886499\\                  
+                    \hline
+                    alpha: 0.25, fit\_prior: True&0.26150415892351375\\                    
+                    \hline                  
+                    alpha: 0.25, fit\_prior: False&0.2618448934577967\\                    
+                    \hline
+                    alpha: 0.5, fit\_prior: True&0.26150415892351375\\                    
+                    \hline                  
+                    alpha: 0.5, fit\_prior: False&0.26150415892351375\\                    
+                    \hline
+                    alpha: 0.75, fit\_prior: True&0.26150415892351375\\                    
+                    \hline                   
+                    alpha: 0.75, fit\_prior: False&0.26150415892351375\\                     
+                    \hline
+                    alpha: 1.0, fit\_prior: True&0.26150415892351375\\                     
+                    \hline                   
+                    alpha: 1.0, fit\_prior: False&0.26150415892351375\\ 
+                    \hline
+                    alpha: 2.0, fit\_prior: True&0.26150415892351375\\  
+                    \hline
+                    alpha: 2.0, fit\_prior: False&0.26150415892351375\\
+                    \hline
+                    \caption{Algoritmo Naive Bayes con Undersampling}
+                \end{longtable}
+                \begin{figure}[H]    
+                    \centering
+                    \includegraphics[width=1\linewidth]{img/ibai5.png}
+                    \caption{Gráfico de puntuación respecto a hiperparametros de Naive Bayes con Undersampling}
+                \end{figure}
+                \label{tab:resultados_analisis_sentimientos} 
+                \begin{longtable}{|p{155.6px}|p{100.3px}|}
+                    \hline
+                    \textbf{Hiperparametros} & \textbf{Score}\\
+                    \hline                    
+                    alpha: 1e-08, fit\_prior: True&0.6378813060875718\\ 
+                    \hline
+                    alpha: 1e-08, fit\_prior: False&0.6492006310331764\\ 
+                    \hline
+                    alpha: 0.0001, fit\_prior: True&0.6324929509989836\\ 
+                    \hline                    
+                    alpha: 0.0001, fit\_prior: False&0.6506641767173721\\ 
+                    \hline
+                    alpha: 0.1, fit\_prior: True&0.5750052864840667\\ 
+                    \hline                    
+                    alpha: 0.1, fit\_prior: False&0.6105897295209468\\ 
+                    \hline
+                    alpha: 0.25, fit\_prior: True&0.5526985807586382\\ 
+                    \hline                    
+                    alpha: 0.25, fit\_prior: False&0.5562045442573346\\ 
+                    \hline
+                    alpha: 0.5, fit\_prior: True&0.5372686543820022\\ 
+                    \hline                    
+                    alpha: 0.5, fit\_prior: False&0.534127342898366\\ 
+                    \hline
+                    alpha: 0.75, fit\_prior: True&0.5242645402117845\\ 
+                    \hline                    
+                    alpha: 0.75, fit\_prior: False&0.5231333995474272\\ 
+                    \hline
+                    alpha: 1.0, fit\_prior: True&0.5151533425902142\\ 
+                    \hline                    
+                    alpha: 1.0, fit\_prior: False&0.5143950452788086\\ 
+                    \hline
+                    alpha: 2.0, fit\_prior: True&0.47900545289558905\\ 
+                    \hline                    
+                    alpha: 2.0, fit\_prior: False&0.4745976656337086\\ 
+                    \hline
+                    \caption{Algoritmo Naive Bayes con Oversampling}
+                \end{longtable}
+                \begin{figure}[H]
+                    \centering
+                    \includegraphics[width=1\linewidth]{img/ibai4.png}
+                    \caption{Gráfico de puntuación respecto a hiperparametros de Naive Bayes con Oversampling}
+                \end{figure}
+        \clearpage
         \section{Topic Modeling}
             \subsection{Hiperparámetros en las valoraciones positivas de British Airline}
                 \label{tab:hiperparametros_british_airline_positivas}
@@ -778,6 +1491,7 @@
                     \hline
                     \caption{Hiperparámetros en las valoraciones positivas de British Airline}
                 \end{longtable}
+
             \clearpage\subsection{Temas encontrados en las valoraciones positivas de British Airline}
                 \label{tab:temas_british_airline_positivas}
                 \begin{longtable}{|p{1cm}|p{4cm}|p{4cm}|p{6cm}|}
@@ -1356,7 +2070,7 @@
                     \hline
                     11 & Los pasajeros experimentan problemas con la asignación de asientos, conexiones y cambios inesperados. Hay quejas sobre mal servicio, falta de coordinación y experiencias generales desagradables & -2.378762326229286 & though, pay, given, seat, middle, af, available, sleep, booked, connection, find, last, already, airport, closed, go, finally, avoid, money, u \\
                     \hline
-                    12 & Los vuelos pueden ser problemáticos, con quejas sobre retrasos, maletas perdidas y problemas con el abordaje. Los pasajeros también reportan experiencias negativas con el servicio al cliente y compensación inadecuada & -2.39526531042744 & terrible, min, delay, suitcase, compensation, arrival, u, different, late, miss, boarding, flew, upon, nothing, cabin, found, cabin, recommend, food, plane, like \\
+                    12 & Los vuelos pueden ser problemáticos, conñ quejas sobre retrasos, maletas perdidas y problemas con el abordaje. Los pasajeros también reportan experiencias negativas con el servicio al cliente y compensación inadecuada & -2.39526531042744 & terrible, min, delay, suitcase, compensation, arrival, u, different, late, miss, boarding, flew, upon, nothing, cabin, found, cabin, recommend, food, plane, like \\
                     \hline
                     13 & El servicio puede ser inestable, con quejas sobre mal manejo del equipaje y retrasos. Los pasajeros enfrentan problemas con vuelos atrasados y una falta de respuesta adecuada del servicio al cliente & -2.4416324070304047 & delayed, minute, arrival, old, also, year, seat, luggage, answer, everyone, problem, check, min, french, different, would, bad, experience, connection, bag \\
                     \hline

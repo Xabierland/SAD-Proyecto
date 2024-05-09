@@ -79,6 +79,14 @@ optional arguments:
 
 ## Uso
 
+### Datos
+
+Preprocesado y union de los datos
+
+```bash
+python Datos/datos.py
+```
+
 ### Clasificador
 
 Basico
@@ -151,8 +159,6 @@ python clustering.py -f AirlinesTrain.csv -v --debug
         "fit_prior": [true, false]
         }
 }
-
-
 ```
 
 ### Clustering
@@ -161,18 +167,21 @@ python clustering.py -f AirlinesTrain.csv -v --debug
 {
     "preprocessing": {
         "unique_category_threshold": 51,
-        "drop_features": ["Name", "Airline", "Verified", "Review Date", "Type of Traveller", "Month Flown", "Route", "Class", "Seat Comfort","Staff Service","Food & Beverages", "Inflight Entertainment", "Value For Money", "Overall Rating", "Recommended"],
+        "drop_features": ["Name", "Airline", "Verified", "Date", "Type of Traveller", "Route", "Class", "Seat Comfort","Staff Service","Food & Beverages", "Inflight Entertainment", "Value For Money", "Overall Rating", "Numerical Overall Rating"],
         "missing_values": "drop",
         "impute_strategy": "",
-        "scaling": "standard",
-        "text_process": "tf-idf",
-        "sampling": "undersampling"
+        "text_process": "tf-idf"
     },
     "lda":{
-        "num_topics" : [3, 5, 10],
-        "chunksize" : [2000],
-        "passes" : [20],
-        "iterations" : [400]
+        "num_topics" : [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100],
+        "passes" : [50],
+        "iterations" : [100]
+    },
+    "nmf":{
+        "num_topics" : [5, 10, 15, 20],
+        "max_iter" : [1000],
+        "alpha" : [0.1],
+        "l1_ratio" : [0.5]
     }
 }
 ```

@@ -1,13 +1,10 @@
 {
-    "multithreading": false,
     "preprocessing": {
         "unique_category_threshold": 51,
         "drop_features": ["Name", "Airline", "Verified", "Date", "Type of Traveller", "Route", "Class", "Seat Comfort","Staff Service","Food & Beverages", "Inflight Entertainment", "Value For Money", "Overall Rating", "Numerical Overall Rating"],
         "missing_values": "drop",
         "impute_strategy": "",
-        "scaling": "standard",
-        "text_process": "tf-idf",
-        "sampling": "undersampling"
+        "text_process": "tf-idf"
     },
     "lda":{
         "num_topics" : [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100],

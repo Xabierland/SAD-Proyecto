@@ -16,6 +16,8 @@ import time
 import json
 import csv
 import os
+import matplotlib.pyplot as plt
+
 # Colorama
 from colorama import Fore
 # Tqdm
@@ -529,11 +531,42 @@ def save_model(gs):
         with open('output/modelo.pkl', 'wb') as file:
             pickle.dump(gs, file)
             print(Fore.CYAN+"Modelo guardado con éxito"+Fore.RESET)
+        file.close()
         with open('output/modelo.csv', 'w') as file:
             writer = csv.writer(file)
             writer.writerow(['Params', 'Score'])
             for params, score in zip(gs.cv_results_['params'], gs.cv_results_['mean_test_score']):
                 writer.writerow([params, score])
+        file.close()
+        if args.verbose:
+            """Se muestra la grafica con los hiperparametros y su puntuación"""
+            data = []
+            with open("./output/modelo.csv", "r") as file:
+                next(file)
+                for line in file:
+                    if line.strip() == "":
+                        continue
+                    line_data = [item.strip() for item in line.strip().split('",')]
+                    params = line_data[0]
+                    score = float(line_data[1])
+                    data.append((params, score))
+
+
+            params = [param for param, _ in data]
+            scores = [score for _, score in data]
+
+            plt.figure(figsize=(10, 6))
+
+            plt.bar(params, scores, color='skyblue', edgecolor='black') 
+
+            plt.xticks(rotation=90)
+
+            plt.xlabel('Hiperparámetros, pasar el raton por encima para ver el valor exacto si es muy largo')
+            plt.ylabel('Puntuación')
+            plt.title('Hiperparámetros, pasar el raton por encima para ver el valor exacto si es muy largo')
+
+            plt.tight_layout()
+            plt.show()
     except Exception as e:
         print(Fore.RED+"Error al guardar el modelo"+Fore.RESET)
         print(e)
@@ -814,7 +847,7 @@ if __name__ == "__main__":
                 print(Fore.GREEN+"Algoritmo naive bayes ejecutado con éxito"+Fore.RESET)
                 sys.exit(0)
             except Exception as e:
-                print(e)
+                print(e)             
         else:
             print(Fore.RED+"Algoritmo no soportado"+Fore.RESET)
             sys.exit(1)

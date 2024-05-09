@@ -547,10 +547,12 @@ if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal_handler)
     # Parseamos los argumentos
     args = parse_args()
-    print(args)
     # Si la carpeta output no existe la creamos
     print("\n- Creando carpeta output...")
-    safe_folder = args.file.split('\\')[-1].split('.')[0]
+    if os.name == 'nt':
+        safe_folder = args.file.split('\\')[-1].split('.')[0]
+    else:
+        safe_folder = args.file.split('/')[-1].split('.')[0]
     try:
         # Creamos la carpeta con el nombre del fichero csv recibido como argumento
         # Ten en cuenta que args.file es el path completo al fichero csv - file='..\\Datos\\Output\\BritishPos.csv'

@@ -4,13 +4,14 @@ Autor: Xabier Gabiña, Ibai Sologuestoa, Unai Garcia, Luken Bilbao
 Descripcion: Script para clustering de datos usando gensim LDA
 """
 
-# Librerias
+## Librerias
 import sys
 import json
 import argparse
 import signal
 import os
 import traceback
+import csv
 import string
 import unicodedata
 import numpy as np
@@ -24,16 +25,15 @@ import nltk
 from nltk.tokenize import RegexpTokenizer
 from nltk.stem.wordnet import WordNetLemmatizer
 # Gensim - Preprocesado de texto y clustering con LDA de datos
-from gensim.models import Phrases
+from gensim.models import Phrases, LdaModel, Nmf,CoherenceModel, TfidfModel
 from gensim.corpora import Dictionary
-from gensim.models import LdaModel
 # Imblearn - Balanceo de datos
 from imblearn.under_sampling import RandomUnderSampler
 from imblearn.over_sampling import RandomOverSampler
+# Matplotlib - Graficas
+import matplotlib.pyplot as plt
 
-
-# Funciones auxiliares
-
+## Funciones auxiliares
 def signal_handler(sig, frame):
     """
     Función para manejar la señal SIGINT (Ctrl+C)
@@ -259,7 +259,7 @@ def preprocesar_datos():
     unir_columnas()
 
 ## Clustering
-def clustering():
+def lda():
     """
     Función para realizar el clustering utilizando el modelo LDA (Latent Dirichlet Allocation).
 
@@ -279,51 +279,259 @@ def clustering():
 
     """
     try:
-        # Create the dictionary
+        # Añadimos los bigramas si aparecen en al menos 20 documentos
+        bigram = Phrases(data['text'], min_count=20)
+        for idx in range(len(data['text'])):
+            for token in bigram[data['text'][idx]]:
+                if '_' in token:
+                    # Token is a bigram, add to document.
+                    data['text'][idx].append(token)
+        
+        # Creamos el diccionario eliminando palabras que aparecen en menos de 20 documentos y en más del 50% de los documentos
+        # El diccionario es un mapeo de palabras a IDs
         dictionary = Dictionary(data['text'])
         dictionary.filter_extremes(no_below=20, no_above=0.5)
         
-        # Create the corpus
-        corpus = [dictionary.doc2bow(doc) for doc in data['text']]
+        # Creamos el corpus
+        # El corpus es una lista de listas, donde cada lista contiene tuplas (id_palabra, frecuencia)
+        if args.preprocessing["text_process"] == "bow":
+            corpus = [dictionary.doc2bow(doc) for doc in data['text']]
+        elif args.preprocessing["text_process"] == "tf-idf":
+            tfidf = TfidfModel(dictionary=dictionary)
+            corpus = [tfidf[dictionary.doc2bow(doc)] for doc in data['text']]
+           
         
-        # Create the id2word mapping
+        # Creamos el id2word
+        # El id2word es un mapeo de IDs a palabras, se diferencia del diccionario en que el diccionario mapea palabras a IDs
         temp = dictionary[0]
         id2word = dictionary.id2token
         
         # Perform LDA
         avg_topic_coherence = 0
         best_avg_topic_coherence = 0
-        top_topics = []
-        best_top_topics = []
         
-        with tqdm(total=len(args.lda["num_topics"]) * len(args.lda["chunksize"]) * len(args.lda["passes"]) * len(args.lda["iterations"])) as pbar:
-            for num_topic in args.lda["num_topics"]:
-                for chunksize in args.lda["chunksize"]:
+        # Valores para la grafica
+        umass_values = []
+        cv_values = []
+        num_topics_values = []
+
+        with tqdm(total=len(args.lda["num_topics"]) * len(args.lda["passes"]) * len(args.lda["iterations"])) as pbar:
+            with open(safe_folder+'/clustering_results.csv', 'w', newline='') as csvfile:
+                fieldnames = ['Num Topics', 'Passes', 'Iterations', 'Coherence']
+                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                writer.writeheader()
+
+                for num_topic in args.lda["num_topics"]:
                     for passes in args.lda["passes"]:
                         for iterations in args.lda["iterations"]:
                             lda = LdaModel(corpus=corpus,
                                 id2word=id2word,
-                                chunksize=chunksize,
                                 alpha='auto',
                                 eta='auto',
                                 iterations=int(iterations),
                                 num_topics=int(num_topic),
                                 passes=int(passes),
                                 random_state=42)
-                            top_topics=lda.top_topics(corpus)
-                            avg_topic_coherence = sum([t[1] for t in top_topics]) / num_topic
+
+                            # Calculamos la coherencia de los topicos
+                            avg_topic_coherence = CoherenceModel(model=lda, corpus=corpus, dictionary=dictionary, coherence='u_mass').get_coherence()
+
+                            if args.debug:
+                                print('\nCoherencia %.4f.' % avg_topic_coherence)
+
+                            # Guardamos los resultados
+                            writer.writerow({'Num Topics': num_topic, 'Passes': passes, 'Iterations': iterations, 'Coherence': avg_topic_coherence})
+                            
+                            # Si la coherencia es mejor que la anterior, guardamos el modelo
                             if avg_topic_coherence < best_avg_topic_coherence:
-                                best_top_topics = top_topics
+                                best_model = lda
+                                best_num_topic = num_topic
+                                best_passes = passes
+                                best_iterations = iterations
                                 best_avg_topic_coherence = avg_topic_coherence
+
+                            # Añade valor a la grafica
+                            umass_values.append(avg_topic_coherence)
+                            cv_values.append(CoherenceModel(model=lda, texts=data['text'], dictionary=dictionary, coherence='c_v').get_coherence())
+                            num_topics_values.append(num_topic)
+
+                            # Actualizamos la barra de progreso
                             pbar.update(1)
+
+        # Graficamos la coherencia en función del número de tópicos
+        plt.figure()
+        plt.plot(num_topics_values, umass_values)
+        plt.xlabel('Número de Tópicos')
+        plt.ylabel('Coherencia (u_mass)')
+        plt.title('Coherencia en función del número de tópicos')
+        plt.savefig(safe_folder+'/coherence_umass.png')
         
+        plt.figure()
+        plt.plot(num_topics_values, cv_values)
+        plt.xlabel('Número de Tópicos')
+        plt.ylabel('Coherencia (c_v)')
+        plt.title('Coherencia en función del número de tópicos')
+        plt.savefig(safe_folder+'/coherence_cv.png')
+
         # Imprimimos el mejor resultado
-        print('Media coherencia de topico: %.4f.' % best_avg_topic_coherence)
-        i=0
-        for topic in best_top_topics:
-            i+=1
-            print('Topic', i)
-            print(topic)
+        if args.verbose:
+            print('Media coherencia de topico: %.4f.' % best_avg_topic_coherence)
+            print('Mejores parametros: num_topics=%d, passes=%d, iterations=%d' % (best_num_topic, best_passes, best_iterations))
+            i=0
+            for topic in best_model.top_topics(corpus):
+                i+=1
+                print('Topic', i)
+                print(topic)
+        
+        # Guardamos los mejores topicos
+        with open(safe_folder+'/topics.txt', 'w') as f:
+            f.write('Media coherencia de topico: %.4f.\n' % best_avg_topic_coherence)
+            f.write('Mejores parametros: num_topics=%d, passes=%d, iterations=%d\n' % (best_num_topic, best_passes, best_iterations))
+            i=0
+            for topic in best_model.top_topics(corpus):
+                i+=1
+                f.write('Topic %d\n' % i)
+                f.write(str(topic)+'\n')
+        
+        # Guardamos el modelo
+        best_model.save(safe_folder+'/lda_model')
+    except Exception as e:
+        print(Fore.RED+"Error al realizar el clustering"+Fore.RESET)
+        print(e)
+        traceback.print_exc()
+        sys.exit(1)
+
+def nmf():
+    """
+    Función para realizar el clustering utilizando el modelo NMF (Non-negative Matrix Factorization).
+
+    Esta función realiza el clustering de un conjunto de textos utilizando el modelo NMF. 
+    El proceso de clustering se realiza en varias etapas, donde se ajustan los parámetros 
+    del modelo NMF y se calcula la coherencia de los tópicos generados. El objetivo es 
+    encontrar la combinación de parámetros que genere los tópicos más coherentes.
+
+    Args:
+        None
+
+    Returns:
+        None
+
+    Raises:
+        Exception: Si ocurre algún error durante el proceso de clustering.
+
+    """
+    try:
+        # Añadimos los bigramas si aparecen en al menos 20 documentos
+        bigram = Phrases(data['text'], min_count=20)
+        for idx in range(len(data['text'])):
+            for token in bigram[data['text'][idx]]:
+                if '_' in token:
+                    # Token is a bigram, add to document.
+                    data['text'][idx].append(token)
+        
+        # Creamos el diccionario eliminando palabras que aparecen en menos de 20 documentos y en más del 50% de los documentos
+        # El diccionario es un mapeo de palabras a IDs
+        dictionary = Dictionary(data['text'])
+        dictionary.filter_extremes(no_below=20, no_above=0.5)
+        
+        # Creamos el corpus
+        # El corpus es una lista de listas, donde cada lista contiene tuplas (id_palabra, frecuencia)
+        if args.preprocessing["text_process"] == "bow":
+            corpus = [dictionary.doc2bow(doc) for doc in data['text']]
+        elif args.preprocessing["text_process"] == "tf-idf":
+            tfidf = TfidfModel(dictionary=dictionary)
+            corpus = [tfidf[dictionary.doc2bow(doc)] for doc in data['text']]
+           
+        
+        # Creamos el id2word
+        # El id2word es un mapeo de IDs a palabras, se diferencia del diccionario en que el diccionario mapea palabras a IDs
+        temp = dictionary[0]
+        id2word = dictionary.id2token
+        
+        # Perform NMF
+        avg_topic_coherence = 0
+        best_avg_topic_coherence = 0
+
+        # Valores para la grafica
+        umass_values = []
+        cv_values = []
+        num_topics_values = []
+
+        with tqdm(total=len(args.nmf["num_topics"]) * len(args.nmf["passes"]) * len(args.nmf["iterations"])) as pbar:
+            with open(safe_folder+'/clustering_results.csv', 'w', newline='') as csvfile:
+                fieldnames = ['Num Topics', 'Passes', 'Iterations', 'Coherence']
+                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                writer.writeheader()
+
+                for num_topic in args.nmf["num_topics"]:
+                    for passes in args.nmf["passes"]:
+                        for iterations in args.nmf["iterations"]:
+                            nmf = Nmf(corpus=corpus,
+                                id2word=id2word,
+                                num_topics=int(num_topic),
+                                passes=int(passes),
+                                random_state=42)
+
+                            # Calculamos la coherencia de los topicos
+                            avg_topic_coherence = CoherenceModel(model=nmf, corpus=corpus, dictionary=dictionary, coherence='u_mass').get_coherence()
+
+                            if args.debug:
+                                print('\nCoherencia %.4f.' % avg_topic_coherence)
+
+                            # Guardamos los resultados
+                            writer.writerow({'Num Topics': num_topic, 'Passes': passes, 'Iterations': iterations, 'Coherence': avg_topic_coherence})
+                            
+                            # Si la coherencia es mejor que la anterior, guardamos el modelo
+                            if avg_topic_coherence < best_avg_topic_coherence:
+                                best_model = nmf
+                                best_num_topic = num_topic
+                                best_passes = passes
+                                best_iterations = iterations
+                                best_avg_topic_coherence = avg_topic_coherence
+
+                            # Añade valor a la grafica
+                            umass_values.append(avg_topic_coherence)
+                            cv_values.append(CoherenceModel(model=nmf, texts=data['text'], dictionary=dictionary, coherence='c_v').get_coherence())
+                            num_topics_values.append(num_topic)
+
+                            # Actualizamos la barra de progreso
+                            pbar.update(1)
+
+        # Graficamos la coherencia en función del número de tópicos
+        plt.plot(num_topics_values, umass_values)
+        plt.xlabel('Número de Tópicos')
+        plt.ylabel('Coherencia (u_mass)')
+        plt.title('Coherencia en función del número de tópicos')
+        plt.savefig(safe_folder+'/coherence_umass.png')
+
+        plt.plot(num_topics_values, cv_values)
+        plt.xlabel('Número de Tópicos')
+        plt.ylabel('Coherencia (c_v)')
+        plt.title('Coherencia en función del número de tópicos')
+        plt.savefig(safe_folder+'/coherence_cv.png')
+
+        # Imprimimos el mejor resultado
+        if args.verbose:
+            print('Media coherencia de topico: %.4f.' % best_avg_topic_coherence)
+            print('Mejores parametros: num_topics=%d, passes=%d, iterations=%d' % (best_num_topic, best_passes, best_iterations))
+            i=0
+            for topic in best_model.top_topics(corpus):
+                i+=1
+                print('Topic', i)
+                print(topic)
+        
+        # Guardamos los mejores topicos
+        with open(safe_folder+'/topics.txt', 'w') as f:
+            f.write('Media coherencia de topico: %.4f.\n' % best_avg_topic_coherence)
+            f.write('Mejores parametros: num_topics=%d, passes=%d, iterations=%d\n' % (best_num_topic, best_passes, best_iterations))
+            i=0
+            for topic in best_model.top_topics(corpus):
+                i+=1
+                f.write('Topic %d\n' % i)
+                f.write(str(topic)+'\n')
+        
+        # Guardamos el modelo
+        best_model.save(safe_folder+'/nmf_model')
     except Exception as e:
         print(Fore.RED+"Error al realizar el clustering"+Fore.RESET)
         print(e)
@@ -341,8 +549,16 @@ if __name__ == "__main__":
     args = parse_args()
     # Si la carpeta output no existe la creamos
     print("\n- Creando carpeta output...")
+    if os.name == 'nt':
+        safe_folder = args.file.split('\\')[-1].split('.')[0]
+    else:
+        safe_folder = args.file.split('/')[-1].split('.')[0]
     try:
-        os.makedirs('output')
+        # Creamos la carpeta con el nombre del fichero csv recibido como argumento
+        # Ten en cuenta que args.file es el path completo al fichero csv - file='..\\Datos\\Output\\BritishPos.csv'
+        # Por lo que si lo dividimos por '\' y cogemos el último elemento, obtendremos el nombre del fichero
+        # En este caso BritishPos
+        os.makedirs(safe_folder)
         print(Fore.GREEN+"Carpeta output creada con éxito"+Fore.RESET)
     except FileExistsError:
         print(Fore.GREEN+"La carpeta output ya existe"+Fore.RESET)
@@ -364,13 +580,13 @@ if __name__ == "__main__":
     if args.debug:
         try:
             print("\n- Guardando datos preprocesados...")
-            data.to_csv('output/data-processed.csv', index=False)
+            data.to_csv(safe_folder+'/data-processed.csv', index=False)
             print(Fore.GREEN+"Datos preprocesados guardados con éxito"+Fore.RESET)
         except Exception as e:
             print(Fore.RED+"Error al guardar los datos preprocesados"+Fore.RESET)
     print("\n- Realizando clustering...")
     try:
-        clustering()
+        lda()
     except Exception as e:
         print(Fore.RED+"Error al realizar el clustering"+Fore.RESET)
         print(e)

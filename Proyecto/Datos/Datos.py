@@ -8,6 +8,7 @@ Descripción: Script junta todos los CSVs de los datos en uno solo.
 import pandas as pd
 import os
 import csv
+import pycountry
 
 # Funcion Main
 if __name__ == "__main__":
@@ -95,6 +96,28 @@ if __name__ == "__main__":
     
     #   Cambiamos los valores de las columnas Rating por Pos Neu y Neg
     Datos["Overall Rating"] = Datos["Overall Rating"].apply(lambda x: "POS" if x >= 7 else "NEG" if x <= 4 else "NEU")
+    
+    #   Cambiamos la columna Routa para que en vez de poner "CIUDAD1 to CIUDAD3 via CIUDAD2" ponga "CIUDAD1 - CIUDAD2 - CIUDAD3"
+    #       Reordenamos las ciudades para que sea CIUDAD1 via CIUDAD2 to CIUDAD3
+    Datos["Route"] = Datos["Route"].str.replace(" to ", " - ")
+    Datos["Route"] = Datos["Route"].str.replace(" via ", " - ")
+    #      Cambiamos el orden de las ciudades
+    Datos["Route"] = Datos["Route"].str.split(" - ").apply(lambda x: x[0] + " - " + x[-1] + " - " + x[1] if len(x) == 3 else x[0] + " - " + x[1] if len(x) == 2 else x[0])
+    #       En caso de encontrar una / borrarla y lo que haya detrás
+    Datos["Route"] = Datos["Route"].str.split("/").str[0]
+    
+    # Pasa los nombres de las ciudades y los codigos de ciudades a los paises usando la libreria pycountry
+    for linea in Datos["Route"]:
+        ciudades = linea.split(" - ")
+        paises = []
+        for ciudad in ciudades:
+            try:
+                pais = pycountry.countries.get(name=ciudad)
+                paises.append(pais.name)
+            except:
+                paises.append(ciudad)
+                print(ciudad)
+        Datos["Route"] = Datos["Route"].str.replace(linea, " - ".join(paises))
     
     # Dividimos el DataFrame
     #   Datos de British Airlines

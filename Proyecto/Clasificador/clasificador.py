@@ -16,6 +16,8 @@ import time
 import json
 import csv
 import os
+import matplotlib.pyplot as plt
+
 # Colorama
 from colorama import Fore
 # Tqdm
@@ -337,7 +339,6 @@ def process_text(text_feature):
                 df1 = pd.DataFrame(x.toarray(), columns=v.get_feature_names_out())
                 data.drop(text_feature.columns, axis=1, inplace=True)
                 data = pd.concat([data, df1], axis=1)
-                #data.drop_duplicates(keep='first', inplace=True)
                 print(Fore.GREEN+"Texto tratado con éxito usando TF-IDF"+Fore.RESET)            
             elif args.preprocessing["text_process"] == "bow":
                 bow_vecotirizer = CountVectorizer()
@@ -441,6 +442,7 @@ def drop_features():
         sys.exit(1)
 
 def convertirRating():
+ if args.mode == "train":
     if args.preprocessing["convertirRating"] is True:
         global data
         data[args.prediction] = data[args.prediction].apply(lambda x: "positiva" if x >= 7 else "negativa" if x <= 4 else "neutral")
@@ -508,6 +510,7 @@ def divide_data():
     # Sacamos la columna a predecir
     y = data[args.prediction]
     x = data.drop(columns=[args.prediction])
+    x.sort_index(axis=1, inplace=True)
     
     # Dividimos los datos en entrenamiento y dev
     x_train, x_dev, y_train, y_dev = train_test_split(x, y, test_size=0.25, random_state=42)
@@ -528,11 +531,42 @@ def save_model(gs):
         with open('output/modelo.pkl', 'wb') as file:
             pickle.dump(gs, file)
             print(Fore.CYAN+"Modelo guardado con éxito"+Fore.RESET)
+        file.close()
         with open('output/modelo.csv', 'w') as file:
             writer = csv.writer(file)
             writer.writerow(['Params', 'Score'])
             for params, score in zip(gs.cv_results_['params'], gs.cv_results_['mean_test_score']):
                 writer.writerow([params, score])
+        file.close()
+        if args.verbose:
+            """Se muestra la grafica con los hiperparametros y su puntuación"""
+            data = []
+            with open("./output/modelo.csv", "r") as file:
+                next(file)
+                for line in file:
+                    if line.strip() == "":
+                        continue
+                    line_data = [item.strip() for item in line.strip().split('",')]
+                    params = line_data[0]
+                    score = float(line_data[1])
+                    data.append((params, score))
+
+
+            params = [param for param, _ in data]
+            scores = [score for _, score in data]
+
+            plt.figure(figsize=(10, 6))
+
+            plt.bar(params, scores, color='skyblue', edgecolor='black') 
+
+            plt.xticks(rotation=90)
+
+            plt.xlabel('Hiperparámetros, pasar el raton por encima para ver el valor exacto si es muy largo')
+            plt.ylabel('Puntuación')
+            plt.title('Hiperparámetros, pasar el raton por encima para ver el valor exacto si es muy largo')
+
+            plt.tight_layout()
+            plt.show()
     except Exception as e:
         print(Fore.RED+"Error al guardar el modelo"+Fore.RESET)
         print(e)
@@ -727,6 +761,20 @@ def predict():
     """
     global data
     # Predecimos
+    print(model.feature_names_in_)
+    columnas = data.columns
+    columnasmodelo = model.feature_names_in_
+    for i in range(len(columnas)):
+            if columnas[i] not in columnasmodelo:
+                data.drop(columnas[i], axis=1, inplace=True)
+    for j in range(len(columnasmodelo)):
+            if columnasmodelo[j] not in columnas:
+                data = pd.concat([data, pd.DataFrame([0]*len(data), columns=[columnasmodelo[j]])], axis=1)
+                """for i in range(len(data)):
+                    data[columnasmodelo[j]][i] = 0""" """No se utiliza ya que en el paso anterior ya se ponen a 0"""
+    data.sort_index(axis=1, inplace=True)
+    if args.debug:
+        pd.DataFrame(model.feature_names_in_, columns=['Columnas en modelo']).to_csv('output/modelColumnas.csv', index=False)
     prediction = model.predict(data)
     
     # Añadimos la prediccion al dataframe data
@@ -799,7 +847,7 @@ if __name__ == "__main__":
                 print(Fore.GREEN+"Algoritmo naive bayes ejecutado con éxito"+Fore.RESET)
                 sys.exit(0)
             except Exception as e:
-                print(e)
+                print(e)             
         else:
             print(Fore.RED+"Algoritmo no soportado"+Fore.RESET)
             sys.exit(1)
